@@ -61,7 +61,6 @@ function createMap(year) {
         scope: "usa",
         element: document.getElementById("map"),
         responsive: true,
-        data: map_data,
         
     });
 }
