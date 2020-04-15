@@ -1,0 +1,19 @@
+<html>
+    <head>
+        <title>Leading Causes of Death in the U.S.</title>
+
+        <link rel="stylesheet" type="text/css" href="stylesheet.css">
+
+        <script src="https://d3js.org/d3.v3.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+        <script src="datamaps.usa.min.js"></script>
+    </head>
+    <body onload="onload();">
+        <h1>Leading Causes of Death in the U.S. (1999-2017)</h1>
+        <label for="years"> Select a year:</label>
+        <select id="year" onchange="updateMapToYear();"></select>
+        <div id="map"></div>
+        <script src="index.js"></script>
+    </body>
+
+</html>
