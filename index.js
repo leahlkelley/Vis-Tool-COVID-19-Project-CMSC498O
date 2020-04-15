@@ -56,43 +56,12 @@ function createMap(year) {
         }
     });
     
-    // Create map data
-    var map_data = {};
-
-    // Calculate total deaths for each state
-    Object.keys(state_data).forEach(s => {
-        var deaths = 0;
-        var death_rate = 0.0;
-
-        state_data[s].forEach(d => {
-            deaths += d.Deaths;
-            death_rate += d["Age-adjusted Death Rate"];
-        });
-
-        map_data[state_abbreviations[s]] = {};
-        map_data[state_abbreviations[s]].totalDeaths = deaths;
-        map_data[state_abbreviations[s]].averageDeathRate = death_rate / state_data[s].length;
-    });
-
     // Create map UI
     var datamap = new Datamap({
         scope: "usa",
         element: document.getElementById("map"),
         responsive: true,
         data: map_data,
-        geographyConfig: {
-            popupTemplate: function(geo, data) {
-                var popup = [`<div class="hoverinfo"><strong>${geo.properties.name}</strong><br>Total # of deaths: ${data.totalDeaths}` + 
-                            `<br>Average age-adjusted death rate: ${data.averageDeathRate.toFixed(2)}</div>`];
-
-                return popup;
-            }
-        },
-        done: function(datamap) {
-            datamap.svg.selectAll('.datamaps-subunit').on('click', function(geo) {
-                
-                alert(geo.properties.name);
-            });
-        }
+        
     });
 }
