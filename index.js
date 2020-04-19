@@ -10,7 +10,7 @@ $( function() {
         dateFormat: "mm-dd-yy",
         defaultDate: "-1",
         maxDate: "-1",
-        minDate: "04-12-2020"
+        minDate: "01-22-2020"
     });
 
     // Set date to yesterday's date
