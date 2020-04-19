@@ -30,7 +30,7 @@ function updateMap() {
 
 function loadData() {
     var result = Papa.parse(`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/` + 
-        `csse_covid_19_daily_reports_us/${$("#date").val()}.csv`, {
+        `csse_covid_19_daily_reports/${$("#date").val()}.csv`, {
         download: true,
         complete: function(results, file) {
 	        data = results.data;
@@ -49,10 +49,14 @@ function createMap() {
     // Sort data by state
     console.log(data);
     data.forEach(state => {
-        if (states.includes(state[0])) {
-            map_data[state_abbrevs[state[0]]] = {};
-            map_data[state_abbrevs[state[0]]].confirmed = state[5];
-            map_data[state_abbrevs[state[0]]].deaths = state[6];
+        if (states.includes(state[2])) {
+            if (!map_data[state_abbrevs[state[2]]]) {
+                map_data[state_abbrevs[state[2]]] = {"confirmed": 0, "deaths": 0};
+            }
+            else {
+                map_data[state_abbrevs[state[2]]].confirmed += Number(state[7]);
+                map_data[state_abbrevs[state[2]]].deaths += Number(state[8]);
+            }
         }
     })
     
