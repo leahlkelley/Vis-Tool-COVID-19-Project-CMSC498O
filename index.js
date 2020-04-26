@@ -47,7 +47,9 @@ function createMap() {
     var map_data = {};
 
     // Sort data by state
-    console.log(data);
+    var totalConfirmed = 0;
+    var totalDeaths = 0;
+
     data.forEach(state => {
         if (states.includes(state[2])) {
             if (!map_data[state_abbrevs[state[2]]]) {
@@ -56,9 +58,15 @@ function createMap() {
             else {
                 map_data[state_abbrevs[state[2]]].confirmed += Number(state[7]);
                 map_data[state_abbrevs[state[2]]].deaths += Number(state[8]);
+
+                totalConfirmed += Number(state[7]);
+                totalDeaths += Number(state[8]);
             }
         }
-    })
+    });
+
+    $('#total-confirmed').html(totalConfirmed.toLocaleString());
+    $('#total-deaths').html(totalDeaths.toLocaleString());
     
     // Create map UI
     var datamap = new Datamap({
