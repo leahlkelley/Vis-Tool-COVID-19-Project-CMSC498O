@@ -47,7 +47,6 @@ function loadData() {
         complete: function(results, file) {
 	        data = results.data;
 
-        console.log("data is: " + data);
         createMap();
         }
     });
@@ -78,16 +77,16 @@ function createMap() {
             }
         }
     })
+    console.log(map_data)
 
     // Add population data to the map
-    console.log(pop);
-      pop.forEach(s => {
-        map_data[state_abbrevs[s[0]]] = {"population": s[years[year]]};
-    //  console.log("population: " + s[years[year]])
-        console.log(map_data[state_abbrevs[s[0]]]);
-      });
+    pop.forEach(s => {
+        if (s[0] !== "" && s[0] !== "Puerto Rico") {
+            map_data[state_abbrevs[s[0]]].population = s[years[year]];
+        }
+    });
 
-
+console.log(map_data)
     Object.keys(map_data).forEach(state => {
         // Create legend title
         var min = (Math.floor(Number(map_data[state].confirmed) / 10000.0) * 10000.0);
@@ -98,6 +97,7 @@ function createMap() {
         if (!legendTitles.includes(legendTitle))
             legendTitles.push(legendTitle);
     });
+console.log(map_data)
 
     $('#total-confirmed').html(totalConfirmed.toLocaleString());
     $('#total-deaths').html(totalDeaths.toLocaleString());
@@ -123,8 +123,6 @@ function createMap() {
         fills[legendTitles[i]] = "#00" + Math.floor(255 * (legendTitles.length - i) / legendTitles.length).toString(16) + "FF";
     }
 
-    console.log(fills);
-
     // Create map UI
     var datamap = new Datamap({
         scope: "usa",
@@ -134,6 +132,7 @@ function createMap() {
         fills: fills,
         geographyConfig: {
             popupTemplate: function(geo, data) {
+                console.log(data);
                 var popup = [`<div class="hoverinfo"><strong>${geo.properties.name}</strong><br>Confirmed cases: ${data.confirmed}` +
                             `<br>Deaths: ${data.deaths}` + `<br>Population: ${data.population}</div>`];
 
