@@ -54,14 +54,20 @@ function loadData() {
 }
 
 function createMap() {
-    // Initialize/reinitialize state data
-    state_data = {};
-
     // Create map data
     var map_data = {};
 
+    // Create legend titles
+    var legendTitles = [];
+
     // Sort data by state
+<<<<<<< HEAD
    console.log(data);
+=======
+    var totalConfirmed = 0;
+    var totalDeaths = 0;
+
+>>>>>>> faf70fa17f5be6528c7e6cccb00f6e86fd63ace3
     data.forEach(state => {
         if (states.includes(state[2])) {
             if (!map_data[state_abbrevs[state[2]]]) {
@@ -70,6 +76,9 @@ function createMap() {
             else {
                 map_data[state_abbrevs[state[2]]].confirmed += Number(state[7]);
                 map_data[state_abbrevs[state[2]]].deaths += Number(state[8]);
+
+                totalConfirmed += Number(state[7]);
+                totalDeaths += Number(state[8]);
             }
         }
     })
@@ -82,6 +91,46 @@ function createMap() {
         console.log(map_data[state_abbrevs[s[0]]]);
       });
 
+    });
+
+    Object.keys(map_data).forEach(state => {
+        // Create legend title
+        var min = (Math.floor(Number(map_data[state].confirmed) / 10000.0) * 10000.0);
+        var max = (Math.ceil(Number(map_data[state].confirmed) / 10000.0) * 10000.0);
+        max = max == 0 ? 10000 : max;
+        var legendTitle = min + " to " + max;
+        map_data[state].fillKey = legendTitle;
+        if (!legendTitles.includes(legendTitle))
+            legendTitles.push(legendTitle);
+    });
+
+    console.log(legendTitles);
+
+    $('#total-confirmed').html(totalConfirmed.toLocaleString());
+    $('#total-deaths').html(totalDeaths.toLocaleString());
+
+
+    // Sort titles by start numbers
+    legendTitles = legendTitles.sort((a, b) => parseInt(a.substring(0, a.indexOf(' '))) - parseInt(b.substring(0, b.indexOf(' '))));
+
+    // Adjust for gaps in legend
+    for (var i = 0; i < legendTitles.length - 1; i++) {
+        var prev = parseInt(legendTitles[i].substring(legendTitles[i].lastIndexOf(' ')));
+        var next = parseInt(legendTitles[i + 1].substring(0, legendTitles[i + 1].indexOf(' ')));
+        var localLoops = 0;
+        while (prev < next) {
+            legendTitles.splice(i + 1 + localLoops++, 0, prev + " to " + (prev + 10000));
+            prev += 10000;
+        }
+    }
+
+    // Create fills object
+    var fills = {};
+    for (var i = 0; i < legendTitles.length; i++) {
+        fills[legendTitles[i]] = "#00" + Math.floor(255 * (legendTitles.length - i) / legendTitles.length).toString(16) + "FF";
+    }
+
+    console.log(fills);
 
     // Create map UI
     var datamap = new Datamap({
@@ -89,6 +138,7 @@ function createMap() {
         element: document.getElementById("map"),
         responsive: true,
         data: map_data,
+        fills: fills,
         geographyConfig: {
             popupTemplate: function(geo, data) {
                 var popup = [`<div class="hoverinfo"><strong>${geo.properties.name}</strong><br>Confirmed cases: ${data.confirmed}` +
@@ -98,4 +148,38 @@ function createMap() {
             }
         }
     });
+
+    // Create legend
+    var width = document.getElementById("map").getAttribute("width");
+    var height = document.getElementById("map").getAttribute("height");
+    var svg = d3v5.select("svg");
+
+    // Create dots
+    svg.selectAll("dots")
+    .data(legendTitles)
+    .enter()
+    .append("circle")
+    .attr("cx", $("#map").width() - 170)
+    .attr("cy", function(d,i){ return 100 + i*25}) // 100 is where the first dot appears. 25 is the distance between dots
+    .attr("r", 7)
+    .style("fill", (d, i) => "#00" + Math.floor(255 * (legendTitles.length - i) / legendTitles.length).toString(16) + "FF");
+
+    // Create labels
+    svg.selectAll("labels")
+    .data(legendTitles)
+    .enter()
+    .append("text")
+    .attr("x", $("#map").width() - 160)
+    .attr("y", function(d,i){ return 101 + i*25}) // 100 is where the first dot appears. 25 is the distance between dots
+    //.style("fill", function(d){ return color(d)})
+    .text(d => d)
+    .attr("text-anchor", "left")
+    .style("alignment-baseline", "middle");
+
+    svg.append('text')
+    .attr("x", $("#map").width() - 175)
+    .attr("y", 80)
+    .text("Confirmed Cases: ")
+    .attr("text-anchor", "left")
+    .style("alignment-baseline", "middle");
 }
