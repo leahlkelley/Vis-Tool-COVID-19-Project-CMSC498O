@@ -60,14 +60,10 @@ function createMap() {
     // Create legend titles
     var legendTitles = [];
 
-    // Sort data by state
-<<<<<<< HEAD
-   console.log(data);
-=======
+
     var totalConfirmed = 0;
     var totalDeaths = 0;
 
->>>>>>> faf70fa17f5be6528c7e6cccb00f6e86fd63ace3
     data.forEach(state => {
         if (states.includes(state[2])) {
             if (!map_data[state_abbrevs[state[2]]]) {
@@ -91,7 +87,6 @@ function createMap() {
         console.log(map_data[state_abbrevs[s[0]]]);
       });
 
-    });
 
     Object.keys(map_data).forEach(state => {
         // Create legend title
