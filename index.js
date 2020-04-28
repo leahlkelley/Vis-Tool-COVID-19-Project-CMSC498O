@@ -99,8 +99,6 @@ function createMap() {
             legendTitles.push(legendTitle);
     });
 
-    console.log(legendTitles);
-
     $('#total-confirmed').html(totalConfirmed.toLocaleString());
     $('#total-deaths').html(totalDeaths.toLocaleString());
 
@@ -141,6 +139,12 @@ function createMap() {
 
                 return popup;
             }
+        },
+        done: function(datamap) {
+            datamap.svg.selectAll('.datamaps-subunit').on('click', function(state) {
+                $('#state-data').show()
+                $('#state-data').html(state.properties.name);
+            });
         }
     });
 
