@@ -7,8 +7,15 @@ var state_data = {};
 var pop = [];
 var year;
 
-$( function() {
+Papa.parsePromise = function(date) {
+    var file = `https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/` +
+        `csse_covid_19_daily_reports/${date}.csv`;
+    return new Promise(function(complete, error) {
+        Papa.parse(file, {download: true, complete, error});
+    })
+}
 
+$( function() {
      $("#visual").dialog( {
         autoOpen: false,
         show: true,
@@ -29,9 +36,11 @@ $( function() {
 
     // Set date to yesterday's date
     $("#date").datepicker("setDate", "-1");
-
     // Load data for date
     loadData();
+    Papa.parsePromise($('#date').val()).then(function(results) {
+        createMap(results.data);
+    });
 });
 
 function updateMap() {
@@ -43,27 +52,15 @@ function updateMap() {
 }
 
 function loadData() {
-  year = ($("#date").val()).substring(6);
-//  console.log("year: "+ year);
    var population_data = Papa.parse(`https://raw.githubusercontent.com/samanthalevin1/finalproject/master/nst-est2019-01.csv`, {
       download: true,
       complete: function(results, file){
         pop = results.data;
-
        }
      });
-    var result = Papa.parse(`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/` +
-        `csse_covid_19_daily_reports/${$("#date").val()}.csv`, {
-        download: true,
-        complete: function(results, file) {
-	        data = results.data;
-
-        createMap();
-        }
-    });
 }
 
-function createMap() {
+function createMap(data) {
     // Create map data
     var map_data = {};
 
@@ -73,7 +70,6 @@ function createMap() {
 
     var totalConfirmed = 0;
     var totalDeaths = 0;
-
     data.forEach(state => {
         if (states.includes(state[2])) {
             if (!map_data[state_abbrevs[state[2]]]) {
@@ -88,7 +84,6 @@ function createMap() {
             }
         }
     })
-    console.log(map_data)
 
     // Add population data to the map
     pop.forEach(s => {
@@ -97,7 +92,6 @@ function createMap() {
         }
     });
 
-console.log(map_data)
     Object.keys(map_data).forEach(state => {
         // Create legend title
         var min = (Math.floor(Number(map_data[state].confirmed) / 10000.0) * 10000.0);
@@ -108,15 +102,12 @@ console.log(map_data)
         if (!legendTitles.includes(legendTitle))
             legendTitles.push(legendTitle);
     });
-console.log(map_data)
 
     $('#total-confirmed').html(totalConfirmed.toLocaleString());
     $('#total-deaths').html(totalDeaths.toLocaleString());
 
-
     // Sort titles by start numbers
     legendTitles = legendTitles.sort((a, b) => parseInt(a.substring(0, a.indexOf(' '))) - parseInt(b.substring(0, b.indexOf(' '))));
-
     // Adjust for gaps in legend
     for (var i = 0; i < legendTitles.length - 1; i++) {
         var prev = parseInt(legendTitles[i].substring(legendTitles[i].lastIndexOf(' ')));
@@ -143,7 +134,6 @@ console.log(map_data)
         fills: fills,
         geographyConfig: {
             popupTemplate: function(geo, data) {
-                console.log(data);
                 var popup = [`<div class="hoverinfo"><strong>${geo.properties.name}</strong><br>Confirmed cases: ${data.confirmed}` +
                             `<br>Deaths: ${data.deaths}` + `<br>Population: ${data.population}</div>`];
 
@@ -162,7 +152,30 @@ console.log(map_data)
                 $("#vis").html("");
 
                 // Create bar graph
-                createLineChart(state.properties.name);  
+                var date = moment(new Date(($("#date").val()))).format('MM-DD-YYYY');
+                var weeklyData = [];
+                var promises = [];
+                for (var i = 0; i < 7; i++) {
+                    promises.push(Papa.parsePromise(date).then(function(results) {
+                        var dailyData = {};
+                        results.data.forEach(curState => {
+                            if (curState[2] === state.properties.name) {
+                                if (!dailyData.confirmed) {
+                                    dailyData = {"confirmed": 0, "deaths": 0};
+                                }
+                                
+                                dailyData.confirmed += Number(curState[7]);
+                                dailyData.deaths += Number(curState[8]);
+                            }
+                        });
+                        weeklyData.push({'confirmed': dailyData.confirmed, 'deaths': dailyData.deaths, 'date': moment(results.data[2][4].substring(0, 10)).format('MM-DD-YYYY')});
+                    }));
+                    date = moment(date).subtract(1, 'day').format('MM-DD-YYYY');
+                }
+
+                Promise.all(promises).then(values => {
+                    createLineChart(weeklyData, state.properties.name);
+                });
             });
         }
     });
@@ -170,7 +183,7 @@ console.log(map_data)
     // Create legend
     var width = document.getElementById("map").getAttribute("width");
     var height = document.getElementById("map").getAttribute("height");
-    var svg = d3v5.select("svg");
+    var svg = d3.select("svg");
 
     // Create dots
     svg.selectAll("dots")
@@ -203,70 +216,59 @@ console.log(map_data)
 }
 
 // Line chart for selected state
-function createLineChart(state) {
-
-    // Get x-y data
-    var graph_data = [];
-
-    /** Jonathan, I do not think I pushed the population data 
-     * in correctly -- this is used for the yScale
-     */
-    state_data[state].forEach(d => {
-        graph_data.push({deaths: d["Deaths"], confirmed: d["Confirmed"], recovered: d["Recovered"], population: d["Population"], time: d["Time"]});
-    });
-
-    console.log(graph_data);
-
+function createLineChart(map_data, state) {
     // set the dimensions 
     var width = document.getElementById("vis").getAttribute("width");
     var height = document.getElementById("vis").getAttribute("height");
 
-    var vis = d3v5.select("#vis").attr("width", width).attr("height", height);
+    var vis = d3.select("#vis").attr("width", width).attr("height", height);
     var margins = { top: 20, bottom: 50, left: 50, right: 10 };
 
     /** Jonathan, the scales are a bit off (domain and range)
      * x -> date/time
      * y -> population
      */
-    var xScale = d3v5.scaleTime()
-                .domain(d3v5.extent(graph_data, function(d) { return d.time; }))
+    var xScale = d3.time.scale()
+                .domain(d3.extent(map_data.map(d => new Date(d.date))))
                 .range([margins.left, width - margins.right]);
-    
-    var yScale = d3v5.scaleLinear()
-                .domain([0, d3v5.max(graph_data.map(d => d.population))])
+    var yScale = d3.scale.linear()
+                .domain([0, d3.max(map_data.map(d => d.confirmed))])
                 .range([height - margins.top - margins.bottom, 0]);
-
     // Create line for the following: deaths, confirmed, recovered    
-    var death_line = d3.line()
-        .x(function(d) { return x(d.date); })
-        .y(function(d) { return y(d.deaths); });
+    var death_line = d3.svg.line()
+        .x(function(d) { return xScale(new Date(d.date));})
+        .y(function(d) { return yScale(d.deaths); });
 
-    var confirmed_line = d3.line()
-        .x(function(d) { return x(d.date); })
-        .y(function(d) { return y(d.confirmed); });
+    var confirmed_line = d3.svg.line()
+        .x(function(d) { return xScale(new Date(d.date));})
+        .y(function(d) { return yScale(d.confirmed); });
 
-    var recovered_line = d3.line()
-        .x(function(d) { return x(d.date); })
-        .y(function(d) { return y(d.recovered); });
-
+    var recovered_line = d3.svg.line()
+        .x(function(d) { return xScale(new Date(d.date));})
+        .y(function(d) { return yScale(d.recovered); });
     // Add path for the following: deaths, confirmed, recovered 
+    console.log(map_data)
     vis.append("path")
-      .data(graph_data)
+      .datum(map_data)
       .attr("class", "line")
       .style("stroke", "red")
       .attr("d", death_line);
 
     vis.append("path")
-      .data(graph_data)
+      .datum(map_data)
       .attr("class", "line")
       .style("stroke", "blue")
       .attr("d", confirmed_line);
 
-    vis.append("path")
-      .data(graph_data)
-      .attr("class", "line")
-      .style("stroke", "green")
-      .attr("d", recovered_line);
+    vis.append('g')
+        // .attr('transform', 'translate(0, ' + height + ')')
+        .call(d3.axisBottom().scale(xScale))
+
+    // vis.append("path")
+    //   .data(map_data[state])
+    //   .attr("class", "line")
+    //   .style("stroke", "green")
+    //   .attr("d", recovered_line);
 
     // Add appropriate labels for x and y axis 
 }

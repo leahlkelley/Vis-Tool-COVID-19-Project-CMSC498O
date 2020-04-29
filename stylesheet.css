@@ -10,3 +10,7 @@
 	position: absolute;
 	display: none;
 }
+
+.line {
+	fill: none;
+}
