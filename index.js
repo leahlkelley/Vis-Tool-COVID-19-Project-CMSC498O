@@ -8,6 +8,17 @@ var pop = [];
 var year;
 
 $( function() {
+
+     $("#visual").dialog( {
+        autoOpen: false,
+        show: true,
+        modal: true,
+        draggable: false,
+        resizable: false,
+        minWidth: 1000,
+        minHeight: 550
+    });
+
     // Init datepicker
     $("#date").datepicker({
         dateFormat: "mm-dd-yy",
@@ -141,8 +152,17 @@ console.log(map_data)
         },
         done: function(datamap) {
             datamap.svg.selectAll('.datamaps-subunit').on('click', function(state) {
-                $('#state-data').show()
-                $('#state-data').html(state.properties.name);
+              // Set modal title
+                $( "#visual" ).dialog( "option", "title", "Deaths/Confirmed/Recovered in " + state.properties.name);
+                
+                // Show modal!
+                $("#visual").dialog("open");
+
+                // Clear old chart
+                $("#vis").html("");
+
+                // Create bar graph
+                createLineChart(state.properties.name);  
             });
         }
     });
@@ -180,4 +200,73 @@ console.log(map_data)
     .text("Confirmed Cases: ")
     .attr("text-anchor", "left")
     .style("alignment-baseline", "middle");
+}
+
+// Line chart for selected state
+function createLineChart(state) {
+
+    // Get x-y data
+    var graph_data = [];
+
+    /** Jonathan, I do not think I pushed the population data 
+     * in correctly -- this is used for the yScale
+     */
+    state_data[state].forEach(d => {
+        graph_data.push({deaths: d["Deaths"], confirmed: d["Confirmed"], recovered: d["Recovered"], population: d["Population"], time: d["Time"]});
+    });
+
+    console.log(graph_data);
+
+    // set the dimensions 
+    var width = document.getElementById("vis").getAttribute("width");
+    var height = document.getElementById("vis").getAttribute("height");
+
+    var vis = d3v5.select("#vis").attr("width", width).attr("height", height);
+    var margins = { top: 20, bottom: 50, left: 50, right: 10 };
+
+    /** Jonathan, the scales are a bit off (domain and range)
+     * x -> date/time
+     * y -> population
+     */
+    var xScale = d3v5.scaleTime()
+                .domain(d3v5.extent(graph_data, function(d) { return d.time; }))
+                .range([margins.left, width - margins.right]);
+    
+    var yScale = d3v5.scaleLinear()
+                .domain([0, d3v5.max(graph_data.map(d => d.population))])
+                .range([height - margins.top - margins.bottom, 0]);
+
+    // Create line for the following: deaths, confirmed, recovered    
+    var death_line = d3.line()
+        .x(function(d) { return x(d.date); })
+        .y(function(d) { return y(d.deaths); });
+
+    var confirmed_line = d3.line()
+        .x(function(d) { return x(d.date); })
+        .y(function(d) { return y(d.confirmed); });
+
+    var recovered_line = d3.line()
+        .x(function(d) { return x(d.date); })
+        .y(function(d) { return y(d.recovered); });
+
+    // Add path for the following: deaths, confirmed, recovered 
+    vis.append("path")
+      .data(graph_data)
+      .attr("class", "line")
+      .style("stroke", "red")
+      .attr("d", death_line);
+
+    vis.append("path")
+      .data(graph_data)
+      .attr("class", "line")
+      .style("stroke", "blue")
+      .attr("d", confirmed_line);
+
+    vis.append("path")
+      .data(graph_data)
+      .attr("class", "line")
+      .style("stroke", "green")
+      .attr("d", recovered_line);
+
+    // Add appropriate labels for x and y axis 
 }
