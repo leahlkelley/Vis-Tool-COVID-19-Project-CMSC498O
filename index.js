@@ -92,32 +92,11 @@ function createMap() {
     Object.keys(map_data).forEach(state => {
         map_data[state].fillKey = map_data[state].confirmed;
     });
-    // console.log(legendTitles);
-    // console.log(map_data)
+
 
     $('#total-confirmed').html(totalConfirmed.toLocaleString());
     $('#total-deaths').html(totalDeaths.toLocaleString());
 
-
-    // // Sort titles by start numbers
-    legendTitles = legendTitles.sort((a, b) => parseInt(a.substring(0, a.indexOf(' '))) - parseInt(b.substring(0, b.indexOf(' '))));
-
-    // Adjust for gaps in legend
-    // for (var i = 0; i < legendTitles.length - 1; i++) {
-    //     var prev = parseInt(legendTitles[i].substring(legendTitles[i].lastIndexOf(' ')));
-    //     var next = parseInt(legendTitles[i + 1].substring(0, legendTitles[i + 1].indexOf(' ')));
-    //     var localLoops = 0;
-    //     while (prev < next) {
-    //         legendTitles.splice(i + 1 + localLoops++, 0, prev + " to " + (prev + 10000));
-    //         prev += 10000;
-    //     }
-    // }
-
-    // // Create fills object
-    // var fills = {};
-    // for (var i = 0; i < legendTitles.length; i++) {
-    //     fills[legendTitles[i]] = "#00" + Math.floor(255 * (legendTitles.length - i) / legendTitles.length).toString(16) + "FF";
-    // }
 
     //find the maximum and minimum number of cases
     var confirmedCasesNumbers = [];
@@ -127,10 +106,10 @@ function createMap() {
     });
     confirmedCasesNumbers.sort(function(a, b) {
         return a - b})
-    console.log(confirmedCasesNumbers)
+ 
     //create color scale for legend and map
     const colors = d3.scaleThreshold()
-                        .domain([0, 100, 500, 1000, 5000, 10000, 50000, 100000, 200000, 300000, 400000])
+                        .domain([0, 500, 1000, 5000, 10000, 50000, 100000, 200000, 300000])
                         .range(d3v5.schemeReds[9])
 
     var casesAndColor = {};
@@ -167,10 +146,16 @@ function createMap() {
 
     
     
-    legend({
-        color: d3.scaleThreshold()
-        .domain([100, 500, 1000, 5000, 10000, 50000, 100000, 200000, 300000])
-        .range(d3v5.schemeReds[9]),
+    // legend({
+    //     color: d3.scaleOrdinal()
+    //     .domain([0, 100, 500, 1000, 5000, 10000, 50000, 100000, 200000, 300000])
+    //     .range(d3v5.schemeSpectral[11]),
+    //     title: "Number of Confirmed COVID-19 Cases",
+    //     tickFormat: ",.2r"
+    //   })
+
+      legend({
+        color: d3.scaleThreshold([100, 500, 1000, 5000, 10000, 50000, 100000, 200000, 300000], d3v5.schemeReds[9]),
         title: "Number of Confirmed COVID-19 Cases",
         tickFormat: ",.2r"
       })
@@ -308,6 +293,7 @@ function legend({
           .attr("fill", "currentColor")
           .attr("text-anchor", "start")
           .attr("font-weight", "bold")
+          .attr("")
           .text(title));
 
   }
