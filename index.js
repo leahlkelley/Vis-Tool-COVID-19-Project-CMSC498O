@@ -168,9 +168,13 @@ function createMap() {
     
     
     legend({
-        color: d3.scaleSequential([d3.min(confirmedCasesNumbers), d3.max(confirmedCasesNumbers)], d3v5.interpolateReds),
-        title: "Number of Confirmed Cases"
+        color: d3.scaleThreshold()
+        .domain([100, 500, 1000, 5000, 10000, 50000, 100000, 200000, 300000])
+        .range(d3v5.schemeReds[9]),
+        title: "Number of Confirmed COVID-19 Cases",
+        tickFormat: ",.2r"
       })
+
 
 }
 
