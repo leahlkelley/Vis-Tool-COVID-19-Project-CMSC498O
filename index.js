@@ -268,12 +268,8 @@ function createLineChart(map_data, state) {
 
     // Add appropriate labels for x and y axis 
 }
-    
-    
 
-
-
-
+/** Legend for the DataMap */
 function legend({
     color,
     title,
