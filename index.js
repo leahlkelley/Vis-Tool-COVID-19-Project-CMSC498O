@@ -48,7 +48,9 @@ function updateMap() {
     $("#map").html("");
 
     // Load data for date
-    loadData();
+    Papa.parsePromise($('#date').val()).then(function(results) {
+        createMap(results.data);
+    });
 }
 
 function loadData() {
@@ -70,27 +72,57 @@ function createMap(data) {
 
     var totalConfirmed = 0;
     var totalDeaths = 0;
+
+    STATE_INDEX = 2;
+    CONFIRMED_INDEX = 7;
+    DEATHS_INDEX = 8;
+
+    if (moment($('#date').val()) <= moment('2020-03-09')) {
+        STATE_INDEX = -1;
+        CONFIRMED_INDEX = 3;
+        DEATHS_INDEX = 4;
+    }
+    else if (moment($('#date').val()) <= moment('2020-03-21')) {
+        STATE_INDEX = 0;
+        CONFIRMED_INDEX = 3;
+        DEATHS_INDEX = 4;
+        console.log(1)
+    }
+
+    for (var state in state_abbrevs) {
+        map_data[state_abbrevs[state]] = {'confirmed': 0, 'deaths': 0};
+    };
+
     data.forEach(state => {
-        if (states.includes(state[2])) {
-            if (!map_data[state_abbrevs[state[2]]]) {
-                map_data[state_abbrevs[state[2]]] = {"confirmed": 0, "deaths": 0};
-            }
-            else {
-                map_data[state_abbrevs[state[2]]].confirmed += Number(state[7]);
-                map_data[state_abbrevs[state[2]]].deaths += Number(state[8]);
+        var stateAbbrev;
 
-                totalConfirmed += Number(state[7]);
-                totalDeaths += Number(state[8]);
-            }
+        if (STATE_INDEX === -1) {
+            var cityStateData = state[0].split(',');
+            stateAbbrev = cityStateData[cityStateData.length - 1].trim();
         }
-    })
+        else {
+            stateAbbrev = state_abbrevs[state[STATE_INDEX]]; 
+        }
 
-    // Add population data to the map
-    pop.forEach(s => {
-        if (s[0] !== "" && s[0] !== "Puerto Rico") {
-            map_data[state_abbrevs[s[0]]].population = s[years[year]];
+        if (Object.values(state_abbrevs).indexOf(stateAbbrev) !== -1) {
+            console.log(1)
+            map_data[stateAbbrev].confirmed += Number(state[CONFIRMED_INDEX]);
+            map_data[stateAbbrev].deaths += Number(state[DEATHS_INDEX]);
+
+            totalConfirmed += Number(state[CONFIRMED_INDEX]);
+            totalDeaths += Number(state[DEATHS_INDEX]);
         }
     });
+
+    console.log(map_data)
+
+    // Add population data to the map
+    // pop.forEach(s => {
+    //     if (!map_data[state_abbrevs[s[0]]]) {
+    //         map_data[state_abbrevs[s[0]]] = {};
+    //     }
+    //     map_data[state_abbrevs[s[0]]].population = s[years[year]];
+    // });
 
     Object.keys(map_data).forEach(state => {
         // Create legend title
@@ -247,7 +279,6 @@ function createLineChart(map_data, state) {
         .x(function(d) { return xScale(new Date(d.date));})
         .y(function(d) { return yScale(d.recovered); });
     // Add path for the following: deaths, confirmed, recovered 
-    console.log(map_data)
     vis.append("path")
       .datum(map_data)
       .attr("class", "line")
