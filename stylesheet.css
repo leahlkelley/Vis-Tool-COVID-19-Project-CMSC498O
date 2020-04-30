@@ -14,3 +14,16 @@
 .line {
 	fill: none;
 }
+
+body {
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+.totals {
+	text-align: center;
+}
+
+.map-legend {
+	position: absolute;
+	padding: 30px;
+}
