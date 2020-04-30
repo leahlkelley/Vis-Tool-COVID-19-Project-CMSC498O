@@ -4,8 +4,17 @@
 
         <link rel="stylesheet" type="text/css" href="stylesheet.css">
 
-        <script src="https://d3js.org/d3.v3.min.js"></script>
+        {% comment %} <script src="https://d3js.org/d3.v3.min.js"></script> {% endcomment %}
         <script src="d3.v5.min.js"></script>
+        <script src="https://d3js.org/d3-array.v1.min.js"></script>
+        <script src="https://d3js.org/d3-collection.v1.min.js"></script>
+        <script src="https://d3js.org/d3-color.v1.min.js"></script>
+        <script src="https://d3js.org/d3-format.v1.min.js"></script>
+        <script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+        <script src="https://d3js.org/d3-time.v1.min.js"></script>
+        <script src="https://d3js.org/d3-time-format.v2.min.js"></script>
+        <script src="https://d3js.org/d3-scale.v2.min.js"></script> 
+
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js" type="text/javascript"></script>
         <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js" type="text/javascript"></script>
         <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="Stylesheet" type="text/css" />
@@ -15,10 +24,12 @@
     </head>
     <body>
         <h1>COVID-19 Cases in the U.S. (January 2020 - Present)</h1>
-        <label for="date"> Select a date:</label>
-        <p>Total confirmed cases on this date: <span id="total-confirmed"></span></p>
-        <p>Total confirmed deaths on this date: <span id="total-deaths"></span></p>
+        <b><label for="date"> Select a date:</label></b>
         <input type="text" id="date" onchange="updateMap();" readonly></input>
+        <div class="totals">
+            <p>Total confirmed cases on this date: <span id="total-confirmed"></span></p>
+            <p>Total confirmed deaths on this date: <span id="total-deaths"></span></p>
+        </div>
         <div id="map"></div>
         <script src="index.js"></script>
 

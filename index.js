@@ -77,7 +77,7 @@ function createMap() {
             }
         }
     })
-    console.log(map_data)
+    // console.log(map_data)
 
     // Add population data to the map
     pop.forEach(s => {
@@ -86,42 +86,56 @@ function createMap() {
         }
     });
 
-console.log(map_data)
+// console.log(map_data)
     Object.keys(map_data).forEach(state => {
-        // Create legend title
-        var min = (Math.floor(Number(map_data[state].confirmed) / 10000.0) * 10000.0);
-        var max = (Math.ceil(Number(map_data[state].confirmed) / 10000.0) * 10000.0);
-        max = max == 0 ? 10000 : max;
-        var legendTitle = min + " to " + max;
-        map_data[state].fillKey = legendTitle;
-        if (!legendTitles.includes(legendTitle))
-            legendTitles.push(legendTitle);
+        map_data[state].fillKey = map_data[state].confirmed;
     });
-console.log(map_data)
+    // console.log(legendTitles);
+    // console.log(map_data)
 
     $('#total-confirmed').html(totalConfirmed.toLocaleString());
     $('#total-deaths').html(totalDeaths.toLocaleString());
 
 
-    // Sort titles by start numbers
+    // // Sort titles by start numbers
     legendTitles = legendTitles.sort((a, b) => parseInt(a.substring(0, a.indexOf(' '))) - parseInt(b.substring(0, b.indexOf(' '))));
 
     // Adjust for gaps in legend
-    for (var i = 0; i < legendTitles.length - 1; i++) {
-        var prev = parseInt(legendTitles[i].substring(legendTitles[i].lastIndexOf(' ')));
-        var next = parseInt(legendTitles[i + 1].substring(0, legendTitles[i + 1].indexOf(' ')));
-        var localLoops = 0;
-        while (prev < next) {
-            legendTitles.splice(i + 1 + localLoops++, 0, prev + " to " + (prev + 10000));
-            prev += 10000;
-        }
-    }
+    // for (var i = 0; i < legendTitles.length - 1; i++) {
+    //     var prev = parseInt(legendTitles[i].substring(legendTitles[i].lastIndexOf(' ')));
+    //     var next = parseInt(legendTitles[i + 1].substring(0, legendTitles[i + 1].indexOf(' ')));
+    //     var localLoops = 0;
+    //     while (prev < next) {
+    //         legendTitles.splice(i + 1 + localLoops++, 0, prev + " to " + (prev + 10000));
+    //         prev += 10000;
+    //     }
+    // }
 
-    // Create fills object
-    var fills = {};
-    for (var i = 0; i < legendTitles.length; i++) {
-        fills[legendTitles[i]] = "#00" + Math.floor(255 * (legendTitles.length - i) / legendTitles.length).toString(16) + "FF";
-    }
+    // // Create fills object
+    // var fills = {};
+    // for (var i = 0; i < legendTitles.length; i++) {
+    //     fills[legendTitles[i]] = "#00" + Math.floor(255 * (legendTitles.length - i) / legendTitles.length).toString(16) + "FF";
+    // }
+
+    //find the maximum and minimum number of cases
+    var confirmedCasesNumbers = [];
+    Object.keys(map_data).forEach(state => {
+        map_data[state].confirmed 
+        confirmedCasesNumbers.push(map_data[state].confirmed);
+    });
+
+    console.log(confirmedCasesNumbers)
+    //create color scale for legend and map
+    const colors = d3.scaleThreshold()
+                        .domain([d3.quantile(confirmedCasesNumbers, 0), d3.quantile(confirmedCasesNumbers, 0.20), d3.quantile(confirmedCasesNumbers, 0.40), d3.quantile(confirmedCasesNumbers, 0.60), d3.quantile(confirmedCasesNumbers, .80), d3.quantile(confirmedCasesNumbers, 1)])
+                        .range(d3v5.schemeOranges[6])
+
+    var casesAndColor = {};
+     Object.keys(map_data).forEach(state => {
+        casesAndColor[map_data[state].confirmed] = colors(map_data[state].confirmed)
+    });
+
+                    
 
     // Create map UI
     var datamap = new Datamap({
@@ -129,10 +143,11 @@ console.log(map_data)
         element: document.getElementById("map"),
         responsive: true,
         data: map_data,
-        fills: fills,
+        fills: casesAndColor,
         geographyConfig: {
+            borderColor: '#000000',
             popupTemplate: function(geo, data) {
-                console.log(data);
+                //console.log(data);
                 var popup = [`<div class="hoverinfo"><strong>${geo.properties.name}</strong><br>Confirmed cases: ${data.confirmed}` +
                             `<br>Deaths: ${data.deaths}` + `<br>Population: ${data.population}</div>`];
 
@@ -147,37 +162,7 @@ console.log(map_data)
         }
     });
 
-    // Create legend
-    var width = document.getElementById("map").getAttribute("width");
-    var height = document.getElementById("map").getAttribute("height");
-    var svg = d3v5.select("svg");
+    
 
-    // Create dots
-    svg.selectAll("dots")
-    .data(legendTitles)
-    .enter()
-    .append("circle")
-    .attr("cx", $("#map").width() - 170)
-    .attr("cy", function(d,i){ return 100 + i*25}) // 100 is where the first dot appears. 25 is the distance between dots
-    .attr("r", 7)
-    .style("fill", (d, i) => "#00" + Math.floor(255 * (legendTitles.length - i) / legendTitles.length).toString(16) + "FF");
 
-    // Create labels
-    svg.selectAll("labels")
-    .data(legendTitles)
-    .enter()
-    .append("text")
-    .attr("x", $("#map").width() - 160)
-    .attr("y", function(d,i){ return 101 + i*25}) // 100 is where the first dot appears. 25 is the distance between dots
-    //.style("fill", function(d){ return color(d)})
-    .text(d => d)
-    .attr("text-anchor", "left")
-    .style("alignment-baseline", "middle");
-
-    svg.append('text')
-    .attr("x", $("#map").width() - 175)
-    .attr("y", 80)
-    .text("Confirmed Cases: ")
-    .attr("text-anchor", "left")
-    .style("alignment-baseline", "middle");
 }
