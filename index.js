@@ -256,8 +256,7 @@ function createLineChart(map_data, state) {
     var vis = d3.select("#vis").attr("width", width).attr("height", height);
     var margins = { top: 20, bottom: 50, left: 50, right: 10 };
 
-    /** Jonathan, the scales are a bit off (domain and range)
-     * x -> date/time
+    /* x -> date/time
      * y -> population
      */
     var xScale = d3.time.scale()
@@ -266,6 +265,7 @@ function createLineChart(map_data, state) {
     var yScale = d3.scale.linear()
                 .domain([0, d3.max(map_data.map(d => d.confirmed))])
                 .range([height - margins.top - margins.bottom, 0]);
+                
     // Create line for the following: deaths, confirmed, recovered    
     var death_line = d3.svg.line()
         .x(function(d) { return xScale(new Date(d.date));})
