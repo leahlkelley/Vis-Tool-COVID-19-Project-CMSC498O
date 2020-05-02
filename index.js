@@ -278,6 +278,7 @@ function createLineChart(map_data, state) {
     var recovered_line = d3.svg.line()
         .x(function(d) { return xScale(new Date(d.date));})
         .y(function(d) { return yScale(d.recovered); });
+
     // Add path for the following: deaths, confirmed, recovered 
     vis.append("path")
       .datum(map_data)
@@ -291,15 +292,186 @@ function createLineChart(map_data, state) {
       .style("stroke", "blue")
       .attr("d", confirmed_line);
 
-    vis.append('g')
-        // .attr('transform', 'translate(0, ' + height + ')')
-        .call(d3.axisBottom().scale(xScale))
-
-    // vis.append("path")
-    //   .data(map_data[state])
-    //   .attr("class", "line")
-    //   .style("stroke", "green")
-    //   .attr("d", recovered_line);
 
     // Add appropriate labels for x and y axis 
 }
+    vis.append("path")
+      .data(map_data[state])
+      .attr("class", "line")
+      .style("stroke", "green")
+      .attr("d", recovered_line);
+
+    // Add the x-axis 
+    vis.append("g")
+      .attr("transform", `translate(0,${height - margins.bottom})`)
+      .call(d3.svg.axisBottom(xScale))
+      .selectAll("text")
+      .attr("x", -8)
+      .attr("y", 11)
+      .style("text-anchor", "end")
+      .attr("dx", "-.08em")
+      .attr("dy", ".15em");
+
+    // Add the y-axis 
+    vis.append("g")
+      .attr("transform", `translate(${margins.left},${margins.top})`)
+      .call(d3.svg.axisLeft(yScale));
+
+    // add appropriate labels    
+    vis.append('text')
+      .attr('text-anchor', 'middle')
+      .attr("transform", "translate(" + (width / 2) + "," + (height) + ")")
+      .text("Date");
+
+    vis.append('text')
+      .attr('text-anchor', 'middle')
+      .attr("transform", "translate(" + 25 + "," + 10 + ")")
+      .text("Population");
+}
+
+/** Legend for the DataMap */
+function legend({
+    color,
+    title,
+    tickSize = 6,
+    width = 400, 
+    height = 50 + tickSize,
+    marginTop = 18,
+    marginRight = 0,
+    marginBottom = 16 + tickSize,
+    marginLeft = 0,
+    ticks = width / 64,
+    tickFormat,
+    tickValues
+  } = {}) {
+  
+    const svg = d3v5.select(".map-legend").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("viewBox", [0, 0, width, height])
+        .style("overflow", "visible")
+        .style("display", "block");
+  
+    let tickAdjust = g => g.selectAll(".tick line").attr("y1", marginTop + marginBottom - height);
+    let x;
+  
+    // Continuous
+    if (color.interpolate) {
+      const n = Math.min(color.domain().length, color.range().length);
+  
+      x = color.copy().rangeRound(d3v5.quantize(d3v5.interpolate(marginLeft, width - marginRight), n));
+  
+      svg.append("image")
+          .attr("x", marginLeft)
+          .attr("y", marginTop)
+          .attr("width", width - marginLeft - marginRight)
+          .attr("height", height - marginTop - marginBottom)
+          .attr("preserveAspectRatio", "none")
+          .attr("xlink:href", ramp(color.copy().domain(d3v5.quantize(d3v5.interpolate(0, 1), n))).toDataURL());
+    }
+  
+    // Sequential
+    else if (color.interpolator) {
+      x = Object.assign(color.copy()
+          .interpolator(d3v5.interpolateRound(marginLeft, width - marginRight)),
+          {range() { return [marginLeft, width - marginRight]; }});
+  
+      svg.append("image")
+          .attr("x", marginLeft)
+          .attr("y", marginTop)
+          .attr("width", width - marginLeft - marginRight)
+          .attr("height", height - marginTop - marginBottom)
+          .attr("preserveAspectRatio", "none")
+          .attr("xlink:href", ramp(color.interpolator()).toDataURL());
+  
+      // scaleSequentialQuantile doesn’t implement ticks or tickFormat.
+      if (!x.ticks) {
+        if (tickValues === undefined) {
+          const n = Math.round(ticks + 1);
+          tickValues = d3v5.range(n).map(i => d3.quantile(color.domain(), i / (n - 1)));
+        }
+        if (typeof tickFormat !== "function") {
+          tickFormat = d3v5.format(tickFormat === undefined ? ",f" : tickFormat);
+        }
+      }
+    }
+  
+    // Threshold
+    else if (color.invertExtent) {
+      const thresholds
+          = color.thresholds ? color.thresholds() // scaleQuantize
+          : color.quantiles ? color.quantiles() // scaleQuantile
+          : color.domain(); // scaleThreshold
+  
+      const thresholdFormat
+          = tickFormat === undefined ? d => d
+          : typeof tickFormat === "string" ? d3.format(tickFormat)
+          : tickFormat;
+  
+      x = d3v5.scaleLinear()
+          .domain([-1, color.range().length - 1])
+          .rangeRound([marginLeft, width - marginRight]);
+  
+      svg.append("g")
+        .selectAll("rect")
+        .data(color.range())
+        .join("rect")
+          .attr("x", (d, i) => x(i - 1))
+          .attr("y", marginTop)
+          .attr("width", (d, i) => x(i) - x(i - 1))
+          .attr("height", height - marginTop - marginBottom)
+          .attr("fill", d => d);
+  
+      tickValues = d3v5.range(thresholds.length);
+      tickFormat = i => thresholdFormat(thresholds[i], i);
+    }
+  
+    // Ordinal
+    else {
+      x = d3v5.scaleBand()
+          .domain(color.domain())
+          .rangeRound([marginLeft, width - marginRight]);
+  
+      svg.append("g")
+        .selectAll("rect")
+        .data(color.domain())
+        .join("rect")
+          .attr("x", x)
+          .attr("y", marginTop)
+          .attr("width", Math.max(0, x.bandwidth() - 1))
+          .attr("height", height - marginTop - marginBottom)
+          .attr("fill", color);
+  
+      tickAdjust = () => {};
+    }
+  
+    svg.append("g")
+        .attr("transform", `translate(0,${height - marginBottom})`)
+        .call(d3v5.axisBottom(x)
+          .ticks(ticks, typeof tickFormat === "string" ? tickFormat : undefined)
+          .tickFormat(typeof tickFormat === "function" ? tickFormat : undefined)
+          .tickSize(tickSize)
+          .tickValues(tickValues))
+        .call(tickAdjust)
+        .call(g => g.select(".domain").remove())
+        .call(g => g.append("text")
+          .attr("x", marginLeft)
+          .attr("y", marginTop + marginBottom - height - 6)
+          .attr("fill", "currentColor")
+          .attr("text-anchor", "start")
+          .attr("font-weight", "bold")
+          .text(title));
+
+  }
+
+  function ramp(color, n = 256) {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext("2d");
+    d3.select(canvas).attr("width", n)
+      .attr("height", 1);
+    for (let i = 0; i < n; ++i) {
+      context.fillStyle = color(i / (n - 1));
+      context.fillRect(i, 0, 1, 1);
+    }
+    return canvas;
+  }
