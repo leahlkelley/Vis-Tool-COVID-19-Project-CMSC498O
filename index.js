@@ -1,3 +1,4 @@
+
 const state_abbrevs = {"Alabama":"AL", "Alaska":"AK", "Arizona":"AZ", "Arkansas":"AR", "California":"CA", "Colorado":"CO", "Connecticut":"CT", "Delaware":"DE", "District of Columbia":"DC", "Florida":"FL", "Georgia":"GA", "Hawaii":"HI", "Idaho":"ID", "Illinois":"IL", "Indiana":"IN", "Iowa":"IA", "Kansas":"KS", "Kentucky":"KY", "Louisiana":"LA", "Maine":"ME", "Maryland":"MD", "Massachusetts":"MA", "Michigan":"MI", "Minnesota":"MN", "Mississippi":"MS", "Missouri":"MO", "Montana":"MT", "Nebraska":"NE", "Nevada":"NV", "New Hampshire":"NH", "New Jersey":"NJ", "New Mexico":"NM", "New York":"NY", "North Carolina":"NC", "North Dakota":"ND", "Ohio":"OH", "Oklahoma":"OK", "Oregon":"OR", "Pennsylvania":"PA", "Rhode Island":"RI", "South Carolina":"SC", "South Dakota":"SD", "Tennessee":"TN", "Texas":"TX", "Utah":"UT", "Vermont":"VT", "Virginia":"VA", "Washington":"WA", "West Virginia":"WV", "Wisconsin":"WI", "Wyoming":"WY"};
 const states = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "District of Columbia", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"];
 const years = {"2010":1, "2011": 2, "2012": 3, "2013": 4, "2014": 5, "2015": 6, "2016": 7, "2017": 8, "2018": 9, "2019": 10, "2020": 10}
@@ -44,6 +45,7 @@ $( function() {
 function updateMap() {
     // Delete old map
     $("#map").html("");
+    $(".map-legend").html("");
 
     // Load data for date
     Papa.parsePromise($('#date').val()).then(function(results) {
@@ -127,31 +129,12 @@ function createMap(data) {
     });
 
     Object.keys(map_data).forEach(state => {
-        // Create legend title
-        var min = (Math.floor(Number(map_data[state].confirmed) / 10000.0) * 10000.0);
-        var max = (Math.ceil(Number(map_data[state].confirmed) / 10000.0) * 10000.0);
-        max = max == 0 ? 10000 : max;
-        var legendTitle = min + " to " + max;
-        map_data[state].fillKey = legendTitle;
-        if (!legendTitles.includes(legendTitle))
-            legendTitles.push(legendTitle);
+        map_data[state].fillKey = map_data[state].confirmed;
     });
 
     $('#total-confirmed').html(totalConfirmed.toLocaleString());
     $('#total-deaths').html(totalDeaths.toLocaleString());
 
-    // Sort titles by start numbers
-    legendTitles = legendTitles.sort((a, b) => parseInt(a.substring(0, a.indexOf(' '))) - parseInt(b.substring(0, b.indexOf(' '))));
-    // Adjust for gaps in legend
-    for (var i = 0; i < legendTitles.length - 1; i++) {
-        var prev = parseInt(legendTitles[i].substring(legendTitles[i].lastIndexOf(' ')));
-        var next = parseInt(legendTitles[i + 1].substring(0, legendTitles[i + 1].indexOf(' ')));
-        var localLoops = 0;
-        while (prev < next) {
-            legendTitles.splice(i + 1 + localLoops++, 0, prev + " to " + (prev + 10000));
-            prev += 10000;
-        }
-    }
 
     //find the maximum and minimum number of cases
     var confirmedCasesNumbers = [];
@@ -170,10 +153,7 @@ function createMap(data) {
     var casesAndColor = {};
      Object.keys(map_data).forEach(state => {
         casesAndColor[map_data[state].confirmed] = colors(map_data[state].confirmed)
-    });
-
-    console.log(pop);
-    console.log(map_data);                 
+    });         
 
     // Create map UI
     var datamap = new Datamap({
@@ -181,9 +161,11 @@ function createMap(data) {
         element: document.getElementById("map"),
         responsive: true,
         data: map_data,
-        fills: fills,
+        fills: casesAndColor,
         geographyConfig: {
+            borderColor: '#FFFFFF',
             popupTemplate: function(geo, data) {
+                //console.log(data);
                 var popup = [`<div class="hoverinfo"><strong>${geo.properties.name}</strong><br>Confirmed cases: ${data.confirmed}` +
                             `<br>Deaths: ${data.deaths}` + `<br>Population: ${data.population}</div>`];
 
@@ -230,39 +212,13 @@ function createMap(data) {
         }
     });
 
-    // Create legend
-    var width = document.getElementById("map").getAttribute("width");
-    var height = document.getElementById("map").getAttribute("height");
-    var svg = d3.select("svg");
 
-    // Create dots
-    svg.selectAll("dots")
-    .data(legendTitles)
-    .enter()
-    .append("circle")
-    .attr("cx", $("#map").width() - 170)
-    .attr("cy", function(d,i){ return 100 + i*25}) // 100 is where the first dot appears. 25 is the distance between dots
-    .attr("r", 7)
-    .style("fill", (d, i) => "#00" + Math.floor(255 * (legendTitles.length - i) / legendTitles.length).toString(16) + "FF");
+    legend({
+        color: d3.scaleThreshold([100, 500, 1000, 5000, 10000, 50000, 100000, 200000, 300000], d3v5.schemeReds[9]),
+        title: "Number of Confirmed COVID-19 Cases",
+        tickFormat: ",.2r"
+      })
 
-    // Create labels
-    svg.selectAll("labels")
-    .data(legendTitles)
-    .enter()
-    .append("text")
-    .attr("x", $("#map").width() - 160)
-    .attr("y", function(d,i){ return 101 + i*25}) // 100 is where the first dot appears. 25 is the distance between dots
-    //.style("fill", function(d){ return color(d)})
-    .text(d => d)
-    .attr("text-anchor", "left")
-    .style("alignment-baseline", "middle");
-
-    svg.append('text')
-    .attr("x", $("#map").width() - 175)
-    .attr("y", 80)
-    .text("Confirmed Cases: ")
-    .attr("text-anchor", "left")
-    .style("alignment-baseline", "middle");
 }
 
 // Line chart for selected state
@@ -274,8 +230,7 @@ function createLineChart(map_data, state) {
     var vis = d3.select("#vis").attr("width", width).attr("height", height);
     var margins = { top: 20, bottom: 50, left: 50, right: 10 };
 
-    /** Jonathan, the scales are a bit off (domain and range)
-     * x -> date/time
+    /* x -> date/time
      * y -> population
      */
     var xScale = d3.time.scale()
@@ -284,6 +239,7 @@ function createLineChart(map_data, state) {
     var yScale = d3.scale.linear()
                 .domain([0, d3.max(map_data.map(d => d.confirmed))])
                 .range([height - margins.top - margins.bottom, 0]);
+                
     // Create line for the following: deaths, confirmed, recovered    
     var death_line = d3.svg.line()
         .x(function(d) { return xScale(new Date(d.date));})
