@@ -4,7 +4,7 @@ const years = {"2010":1, "2011": 2, "2012": 3, "2013": 4, "2014": 5, "2015": 6, 
 
 var data = [];
 var state_data = {};
-var pop = [];
+var pop = {};
 var year;
 
 Papa.parsePromise = function(date) {
@@ -36,11 +36,9 @@ $( function() {
 
     // Set date to yesterday's date
     $("#date").datepicker("setDate", "-1");
-    // Load data for date
+    
+    // Load population data and create map
     loadData();
-    Papa.parsePromise($('#date').val()).then(function(results) {
-        createMap(results.data);
-    });
 });
 
 function updateMap() {
@@ -54,12 +52,22 @@ function updateMap() {
 }
 
 function loadData() {
-   var population_data = Papa.parse(`https://raw.githubusercontent.com/samanthalevin1/finalproject/master/nst-est2019-01.csv`, {
-      download: true,
-      complete: function(results, file){
-        pop = results.data;
-       }
-     });
+  //  var population_data = Papa.parse(`https://raw.githubusercontent.com/samanthalevin1/finalproject/master/nst-est2019-01.csv`, {
+  //     download: true,
+  //     complete: function(results, file){
+  //       pop = results.data;
+  //      }
+  //    });
+
+  d3.json("https://datausa.io/api/data?drilldowns=State&measures=Population&year=2018", function(receivedData){
+    // Format pop data and place in pop object
+    receivedData.data.forEach(state => pop[state.State] = state.Population);
+
+    // Load data for date and create map
+    Papa.parsePromise($('#date').val()).then(function(results) {
+        createMap(results.data);
+    });
+  });
 }
 
 function createMap(data) {
@@ -86,7 +94,7 @@ function createMap(data) {
         STATE_INDEX = 0;
         CONFIRMED_INDEX = 3;
         DEATHS_INDEX = 4;
-        console.log(1)
+        // console.log(1)
     }
 
     for (var state in state_abbrevs) {
@@ -105,24 +113,18 @@ function createMap(data) {
         }
 
         if (Object.values(state_abbrevs).indexOf(stateAbbrev) !== -1) {
-            console.log(1)
+            // console.log(1)
             map_data[stateAbbrev].confirmed += Number(state[CONFIRMED_INDEX]);
             map_data[stateAbbrev].deaths += Number(state[DEATHS_INDEX]);
+
+            // Add pop data to map_data
+            if (Object.keys(pop).includes(state[STATE_INDEX]))
+              map_data[stateAbbrev].population = pop[state[STATE_INDEX]];
 
             totalConfirmed += Number(state[CONFIRMED_INDEX]);
             totalDeaths += Number(state[DEATHS_INDEX]);
         }
     });
-
-    console.log(map_data)
-
-    // Add population data to the map
-    // pop.forEach(s => {
-    //     if (!map_data[state_abbrevs[s[0]]]) {
-    //         map_data[state_abbrevs[s[0]]] = {};
-    //     }
-    //     map_data[state_abbrevs[s[0]]].population = s[years[year]];
-    // });
 
     Object.keys(map_data).forEach(state => {
         // Create legend title
@@ -151,11 +153,27 @@ function createMap(data) {
         }
     }
 
-    // Create fills object
-    var fills = {};
-    for (var i = 0; i < legendTitles.length; i++) {
-        fills[legendTitles[i]] = "#00" + Math.floor(255 * (legendTitles.length - i) / legendTitles.length).toString(16) + "FF";
-    }
+    //find the maximum and minimum number of cases
+    var confirmedCasesNumbers = [];
+    Object.keys(map_data).forEach(state => {
+        map_data[state].confirmed 
+        confirmedCasesNumbers.push(map_data[state].confirmed);
+    });
+    confirmedCasesNumbers.sort(function(a, b) {
+        return a - b})
+ 
+    //create color scale for legend and map
+    const colors = d3v5.scaleThreshold()
+                        .domain([0, 500, 1000, 5000, 10000, 50000, 100000, 200000, 300000])
+                        .range(d3v5.schemeReds[9])
+
+    var casesAndColor = {};
+     Object.keys(map_data).forEach(state => {
+        casesAndColor[map_data[state].confirmed] = colors(map_data[state].confirmed)
+    });
+
+    console.log(pop);
+    console.log(map_data);                 
 
     // Create map UI
     var datamap = new Datamap({
@@ -183,7 +201,7 @@ function createMap(data) {
                 // Clear old chart
                 $("#vis").html("");
 
-                // Create bar graph
+                // Create popup box for each state
                 var date = moment(new Date(($("#date").val()))).format('MM-DD-YYYY');
                 var weeklyData = [];
                 var promises = [];
@@ -311,10 +329,10 @@ function createLineChart(map_data, state) {
       .attr("dx", "-.08em")
       .attr("dy", ".15em");
 
-    // Add the y-axis 
+     // Adds y-axis as a "g" element
     vis.append("g")
       .attr("transform", `translate(${margins.left},${margins.top})`)
-      .call(d3.svg.axisLeft(yScale));
+      .call(d3v5.axisLeft(yScale));
 
     // add appropriate labels    
     vis.append('text')
