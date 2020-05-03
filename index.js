@@ -293,8 +293,7 @@ function createLineChart(map_data, state) {
       .attr("d", confirmed_line);
 
 
-    // Add appropriate labels for x and y axis 
-}
+    // Add appropriate labels for x and y axis
     vis.append("path")
       .data(map_data[state])
       .attr("class", "line")
