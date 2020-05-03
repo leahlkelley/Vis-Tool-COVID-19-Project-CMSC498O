@@ -243,6 +243,8 @@ function createLineChart(map_data, state) {
     var recovered_line = d3.svg.line()
         .x(function(d) { return xScale(new Date(d.date));})
         .y(function(d) { return yScale(d.recovered); });
+    map_data = map_data.sort(function(a, b) { return moment(a.date) - moment(b.date) })
+        console.log(map_data)
     // Add path for the following: deaths, confirmed, recovered 
     vis.append("path")
       .datum(map_data)
