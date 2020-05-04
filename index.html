@@ -11,6 +11,10 @@
         <link rel="stylesheet" type="text/css" href="stylesheet.css">
         <script src="https://d3js.org/d3.v3.min.js"></script>
         <script src="d3.v5.min.js"></script> 
+
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://unpkg.com/d3-simple-slider"></script>
+
         <script src="https://d3js.org/d3-array.v1.min.js"></script>
         <script src="https://d3js.org/d3-collection.v1.min.js"></script>
         <script src="https://d3js.org/d3-color.v1.min.js"></script>
@@ -43,6 +47,38 @@
         <div id="visual">
             <svg id="vis" width="1200" height="700"></svg>
         </div>
+
+
+        <h2>Time</h2>
+  <div class="row align-items-center">
+    <div class="col-sm"><div id="slider-time"></div></div>
+  </div>
+
+<script>
+
+    // Time
+    var dataTime = d3.scaleTime().domain([new Date("2020-02-20"), new Date()])
+    .ticks(d3.timeDay, 1);
+
+    var sliderTime = d3
+    .sliderBottom()
+    .min(d3.min(dataTime))
+    .max(d3.max(dataTime))
+    .marks(dataTime)
+    .width(600)
+    .tickFormat(d3.utcFormat("%a %b %e"))
+
+    var gTime = d3
+    .select('div#slider-time')
+    .append('svg')
+    .attr('width', 700)
+    .attr('height', 100)
+    .append('g')
+    .attr('transform', 'translate(30,30)');
+
+  gTime.call(sliderTime);
+
+</script>
 
     </body>
 
