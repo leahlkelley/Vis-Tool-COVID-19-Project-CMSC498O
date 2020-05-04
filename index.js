@@ -72,6 +72,46 @@ function loadData() {
   });
 }
 
+
+
+
+//code for time slider
+// var svg = d3
+//     .select('div#slider-time')
+//     .append('svg')
+//     .attr('width', 900)
+//     .attr('height', 20);
+
+
+// var d = new Date();
+// var dataTime = d3.scaleTime().domain([new Date("2020-01-22"), d.setDate(d.getDate()-1)])
+// .ticks(d3.timeDay, 1);
+
+// var sliderTime = d3
+// .sliderBottom()
+// .min(d3.min(dataTime))
+// .max(d3.max(dataTime))
+// .marks(dataTime)
+// .width(830)
+// .tickFormat(d3.utcFormat("%a %b %e"))
+// .on("onchange", () => svg.dispatch("input"));
+
+// var gTime = d3
+// .select('div#slider-time')
+// .append('svg')
+// .attr('width', 899)
+// .attr('height', 100)
+// .append('g')
+// .attr('transform', 'translate(30,30)');
+
+// gTime.call(sliderTime);
+
+//end code for time slider
+
+
+
+
+
 function createMap(data) {
     // Create map data
     var map_data = {};
@@ -146,8 +186,8 @@ function createMap(data) {
         return a - b})
  
     //create color scale for legend and map
-    const colors = d3v5.scaleThreshold()
-                        .domain([0, 500, 1000, 5000, 10000, 50000, 100000, 200000, 300000])
+    const colors = d3.scaleThreshold()
+                        .domain([0, 500, 1000, 5000, 10000, 50000, 100000, 200000, 400000])
                         .range(d3v5.schemeReds[9])
 
     var casesAndColor = {};
@@ -159,6 +199,8 @@ function createMap(data) {
     var datamap = new Datamap({
         scope: "usa",
         element: document.getElementById("map"),
+        height: 700,
+        width: 1200,
         responsive: true,
         data: map_data,
         fills: casesAndColor,
@@ -166,8 +208,8 @@ function createMap(data) {
             borderColor: '#FFFFFF',
             popupTemplate: function(geo, data) {
                 //console.log(data);
-                var popup = [`<div class="hoverinfo"><strong>${geo.properties.name}</strong><br>Confirmed cases: ${data.confirmed}` +
-                            `<br>Deaths: ${data.deaths}` + `<br>Population: ${data.population}</div>`];
+                var popup = [`<div class="hoverinfo"><strong>${geo.properties.name}</strong><br>Confirmed cases: ${data.confirmed.toLocaleString()}` +
+                            `<br>Deaths: ${data.deaths.toLocaleString()}` + `<br>Population: ${data.population.toLocaleString()}</div>`];
 
                 return popup;
             }
@@ -214,7 +256,7 @@ function createMap(data) {
 
 
     legend({
-        color: d3.scaleThreshold([100, 500, 1000, 5000, 10000, 50000, 100000, 200000, 300000], d3v5.schemeReds[9]),
+        color: d3.scaleThreshold([100, 500, 1000, 5000, 10000, 50000, 100000, 200000, 400000], d3v5.schemeReds[9]),
         title: "Number of Confirmed COVID-19 Cases",
         tickFormat: ",.2r"
       })
@@ -310,8 +352,8 @@ function legend({
     title,
     tickSize = 6,
     width = 400, 
-    height = 50 + tickSize,
-    marginTop = 18,
+    height = 30 + tickSize,
+    marginTop = 5,
     marginRight = 0,
     marginBottom = 16 + tickSize,
     marginLeft = 0,
@@ -395,7 +437,9 @@ function legend({
           .attr("y", marginTop)
           .attr("width", (d, i) => x(i) - x(i - 1))
           .attr("height", height - marginTop - marginBottom)
-          .attr("fill", d => d);
+          .attr("fill", d => d)
+          .attr("stroke-width", "1px")
+          .attr("stroke", "black");
   
       tickValues = d3v5.range(thresholds.length);
       tickFormat = i => thresholdFormat(thresholds[i], i);
