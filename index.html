@@ -1,11 +1,16 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
 <html>
     <head>
+
         <title>COVID-19</title>
 
         <link rel="stylesheet" type="text/css" href="stylesheet.css">
-
         <script src="https://d3js.org/d3.v3.min.js"></script>
-        <script src="d3.v5.min.js"></script>
+        <script src="d3.v5.min.js"></script> 
         <script src="https://d3js.org/d3-array.v1.min.js"></script>
         <script src="https://d3js.org/d3-collection.v1.min.js"></script>
         <script src="https://d3js.org/d3-color.v1.min.js"></script>
@@ -24,20 +29,21 @@
         <script src="datamaps.usa.min.js"></script>
     </head>
     <body>
-        <h1>COVID-19 Cases in the U.S. (January 2020 - Present)</h1>
+        <h2 class="page-title"><br>COVID-19 Cases in the U.S. (January 2020 - Present)<br><br></h2>
         <b><label for="date"> Select a date:</label></b>
         <input type="text" id="date" onchange="updateMap();" readonly></input>
         <div class="totals">
-            <p>Total confirmed cases on this date: <span id="total-confirmed"></span></p>
-            <p>Total confirmed deaths on this date: <span id="total-deaths"></span></p>
+            Total confirmed cases on this date: <span id="total-confirmed"></span><br>
+            Total confirmed deaths on this date: <span id="total-deaths"></span>
         </div>
         <div class="map-legend"></div>
         <br><br>
         <div id="map"></div>
         <script src="index.js"></script>
         <div id="visual">
-            <svg id="vis" width="960" height="600"></svg>
+            <svg id="vis" width="1200" height="700"></svg>
         </div>
+
     </body>
 
 </html>
