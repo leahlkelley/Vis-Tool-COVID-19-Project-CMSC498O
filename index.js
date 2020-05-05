@@ -5,7 +5,7 @@ const years = {"2010":1, "2011": 2, "2012": 3, "2013": 4, "2014": 5, "2015": 6, 
 
 var data = [];
 var state_data = {};
-var pop = [];
+var pop = {};
 var year;
 
 Papa.parsePromise = function(date) {
@@ -37,11 +37,9 @@ $( function() {
 
     // Set date to yesterday's date
     $("#date").datepicker("setDate", "-1");
-    // Load data for date
+    
+    // Load population data and create map
     loadData();
-    Papa.parsePromise($('#date').val()).then(function(results) {
-        createMap(results.data);
-    });
 });
 
 function updateMap() {
@@ -56,12 +54,22 @@ function updateMap() {
 }
 
 function loadData() {
-   var population_data = Papa.parse(`https://raw.githubusercontent.com/samanthalevin1/finalproject/master/nst-est2019-01.csv`, {
-      download: true,
-      complete: function(results, file){
-        pop = results.data;
-       }
-     });
+  //  var population_data = Papa.parse(`https://raw.githubusercontent.com/samanthalevin1/finalproject/master/nst-est2019-01.csv`, {
+  //     download: true,
+  //     complete: function(results, file){
+  //       pop = results.data;
+  //      }
+  //    });
+
+  d3.json("https://datausa.io/api/data?drilldowns=State&measures=Population&year=2018", function(receivedData){
+    // Format pop data and place in pop object
+    receivedData.data.forEach(state => pop[state.State] = state.Population);
+
+    // Load data for date and create map
+    Papa.parsePromise($('#date').val()).then(function(results) {
+        createMap(results.data);
+    });
+  });
 }
 
 
@@ -128,7 +136,7 @@ function createMap(data) {
         STATE_INDEX = 0;
         CONFIRMED_INDEX = 3;
         DEATHS_INDEX = 4;
-        console.log(1)
+        // console.log(1)
     }
 
     for (var state in state_abbrevs) {
@@ -147,16 +155,19 @@ function createMap(data) {
         }
 
         if (Object.values(state_abbrevs).indexOf(stateAbbrev) !== -1) {
-            console.log(1)
+            // console.log(1)
             map_data[stateAbbrev].confirmed += Number(state[CONFIRMED_INDEX]);
             map_data[stateAbbrev].deaths += Number(state[DEATHS_INDEX]);
+
+            // Add pop data to map_data
+            if (Object.keys(pop).includes(state[STATE_INDEX]))
+              map_data[stateAbbrev].population = pop[state[STATE_INDEX]];
 
             totalConfirmed += Number(state[CONFIRMED_INDEX]);
             totalDeaths += Number(state[DEATHS_INDEX]);
         }
     });
 
-// console.log(map_data)
     Object.keys(map_data).forEach(state => {
         map_data[state].fillKey = map_data[state].confirmed;
     });
@@ -182,9 +193,7 @@ function createMap(data) {
     var casesAndColor = {};
      Object.keys(map_data).forEach(state => {
         casesAndColor[map_data[state].confirmed] = colors(map_data[state].confirmed)
-    });
-
-                    
+    });         
 
     // Create map UI
     var datamap = new Datamap({
@@ -200,7 +209,7 @@ function createMap(data) {
             popupTemplate: function(geo, data) {
                 //console.log(data);
                 var popup = [`<div class="hoverinfo"><strong>${geo.properties.name}</strong><br>Confirmed cases: ${data.confirmed.toLocaleString()}` +
-                            `<br>Deaths: ${data.deaths.toLocaleString()}` + `<br>Population: ${data.population}</div>`];
+                            `<br>Deaths: ${data.deaths.toLocaleString()}` + `<br>Population: ${data.population.toLocaleString()}</div>`];
 
                 return popup;
             }
@@ -216,7 +225,7 @@ function createMap(data) {
                 // Clear old chart
                 $("#vis").html("");
 
-                // Create bar graph
+                // Create popup box for each state
                 var date = moment(new Date(($("#date").val()))).format('MM-DD-YYYY');
                 var weeklyData = [];
                 var promises = [];
@@ -287,6 +296,7 @@ function createLineChart(map_data, state) {
         .y(function(d) { return yScale(d.recovered); });
     map_data = map_data.sort(function(a, b) { return moment(a.date) - moment(b.date) })
         console.log(map_data)
+        
     // Add path for the following: deaths, confirmed, recovered 
     vis.append("path")
       .datum(map_data)
@@ -300,17 +310,40 @@ function createLineChart(map_data, state) {
       .style("stroke", "blue")
       .attr("d", confirmed_line);
 
-    vis.append('g')
-        // .attr('transform', 'translate(0, ' + height + ')')
-        .call(d3.axisBottom().scale(xScale))
 
-    // vis.append("path")
-    //   .data(map_data[state])
-    //   .attr("class", "line")
-    //   .style("stroke", "green")
-    //   .attr("d", recovered_line);
+    // Add appropriate labels for x and y axis
+    vis.append("path")
+      .data(map_data[state])
+      .attr("class", "line")
+      .style("stroke", "green")
+      .attr("d", recovered_line);
 
-    // Add appropriate labels for x and y axis 
+    // Add the x-axis 
+    vis.append("g")
+      .attr("transform", `translate(0,${height - margins.bottom})`)
+      .call(d3.svg.axisBottom(xScale))
+      .selectAll("text")
+      .attr("x", -8)
+      .attr("y", 11)
+      .style("text-anchor", "end")
+      .attr("dx", "-.08em")
+      .attr("dy", ".15em");
+
+     // Adds y-axis as a "g" element
+    vis.append("g")
+      .attr("transform", `translate(${margins.left},${margins.top})`)
+      .call(d3v5.axisLeft(yScale));
+
+    // add appropriate labels    
+    vis.append('text')
+      .attr('text-anchor', 'middle')
+      .attr("transform", "translate(" + (width / 2) + "," + (height) + ")")
+      .text("Date");
+
+    vis.append('text')
+      .attr('text-anchor', 'middle')
+      .attr("transform", "translate(" + 25 + "," + 10 + ")")
+      .text("Population");
 }
 
 /** Legend for the DataMap */
