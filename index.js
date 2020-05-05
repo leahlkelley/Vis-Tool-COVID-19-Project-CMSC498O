@@ -75,41 +75,6 @@ function loadData() {
 
 
 
-//code for time slider
-// var svg = d3
-//     .select('div#slider-time')
-//     .append('svg')
-//     .attr('width', 900)
-//     .attr('height', 20);
-
-
-// var d = new Date();
-// var dataTime = d3.scaleTime().domain([new Date("2020-01-22"), d.setDate(d.getDate()-1)])
-// .ticks(d3.timeDay, 1);
-
-// var sliderTime = d3
-// .sliderBottom()
-// .min(d3.min(dataTime))
-// .max(d3.max(dataTime))
-// .marks(dataTime)
-// .width(830)
-// .tickFormat(d3.utcFormat("%a %b %e"))
-// .on("onchange", () => svg.dispatch("input"));
-
-// var gTime = d3
-// .select('div#slider-time')
-// .append('svg')
-// .attr('width', 899)
-// .attr('height', 100)
-// .append('g')
-// .attr('transform', 'translate(30,30)');
-
-// gTime.call(sliderTime);
-
-//end code for time slider
-
-
-
 
 
 function createMap(data) {
