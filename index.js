@@ -7,8 +7,10 @@ var data = [];
 var state_data = {};
 var pop = {};
 var year;
+var datamap;
 
 Papa.parsePromise = function(date) {
+
     var file = `https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/` +
         `csse_covid_19_daily_reports/${date}.csv`;
     return new Promise(function(complete, error) {
@@ -43,23 +45,16 @@ $( function() {
 });
 
 function updateMap() {
-    // Delete old map
-    $("#map").html("");
-    $(".map-legend").html("");
 
-    // Load data for date
-    Papa.parsePromise($('#date').val()).then(function(results) {
-        createMap(results.data);
-    });
+        // create a new map, start by loading data for that date
+        Papa.parsePromise($('#date').val()).then(function(results) {
+            createMap(results.data);
+        });
 }
 
+
 function loadData() {
-  //  var population_data = Papa.parse(`https://raw.githubusercontent.com/samanthalevin1/finalproject/master/nst-est2019-01.csv`, {
-  //     download: true,
-  //     complete: function(results, file){
-  //       pop = results.data;
-  //      }
-  //    });
+
 
   d3.json("https://datausa.io/api/data?drilldowns=State&measures=Population&year=2018", function(receivedData){
     // Format pop data and place in pop object
@@ -72,19 +67,107 @@ function loadData() {
   });
 }
 
+//date slider d3v3 based on: http://bl.ocks.org/zanarmstrong/ddff7cd0b1220bc68a58
+
+
+var sliderMargin = {top:25, right:50, bottom:25, left:50},
+    width = 950 - sliderMargin.left - sliderMargin.right,
+    height = 75 - sliderMargin.top - sliderMargin.bottom;
+
+var formatDate = d3.time.format("%b %d");
+var formatDateForJQuery = d3.time.format("%m-%d-%Y")
+var startDate = new Date("2020-01-23");
+var endDate = new Date();
+endDate.setDate(endDate.getDate()-1);
+console.log(formatDateForJQuery(startDate))
+
+var timeScale = d3.time.scale()
+    .domain([startDate, endDate])
+    .range([0, width])
+    .clamp(true);
+var startValue = timeScale(endDate),
+    startingValue = endDate;
+
+
+var brush = d3.svg.brush()
+    .x(timeScale)
+    .extent([startingValue, startingValue])
+    .on("brush", brushed);
+
+var svgSlider = d3.select("#date-slider").append("svg")
+    .attr("width", width + sliderMargin.left + sliderMargin.right)
+    .attr("height", height + sliderMargin.top + sliderMargin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + sliderMargin.left + "," + sliderMargin.top + ")");
+
+svgSlider.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + height / 2 + ")")
+    .call(d3.svg.axis()
+    .scale(timeScale)
+    .orient("bottom")
+    .tickFormat(function(d) {
+      return formatDate(d);
+    }))
+    .select(".domain")
+    .select(function() {
+      return this.parentNode.appendChild(this.cloneNode(true));
+    })
+    .attr("class", "halo");
+
+var slider = svgSlider.append("g")
+    .attr("class", "slider")
+    .call(brush);
+  
+  slider.selectAll(".extent,.resize")
+    .remove();
+  
+  slider.select(".background")
+    .attr("height", height);
+  
+  var handle = slider.append("g")
+    .attr("class", "handle")
+  
+  handle.append("path")
+    .attr("transform", "translate(0," + height / 2 + ")")
+    .attr("d", "M 0 -18 V 18")
+  
+  handle.append('text')
+    .text(startingValue)
+    .attr("class", "date-slider-text")
+    .attr("transform", "translate(" + (-18) + " ," + (height / 2 - 25) + ")");
+  
+  slider
+    .call(brush.event)
+
+
+function brushed() {
+    var value = brush.extent()[0];
+      
+    if (d3.event.sourceEvent) { // not a programmatic event
+        value = timeScale.invert(d3.mouse(this)[0]);
+        brush.extent([value, value]);
+    }
+      
+    handle.attr("transform", "translate(" + timeScale(value) + ",0)");
+    handle.select('text').text(formatDate(value));
+    // console.log("brushed(): " + formatDateForJQuery(value));
+    document.getElementById("date").value = `${formatDateForJQuery(value)}`
+    updateMap();
+
+}
+
+//end date slider 
 
 
 
 
-
+//initial map creation
 function createMap(data) {
+    $(".map-legend").html("");
+    $("#map").html("");
     // Create map data
     var map_data = {};
-
-    // Create legend titles
-    var legendTitles = [];
-
-
     var totalConfirmed = 0;
     var totalDeaths = 0;
 
@@ -159,13 +242,13 @@ function createMap(data) {
      Object.keys(map_data).forEach(state => {
         casesAndColor[map_data[state].confirmed] = colors(map_data[state].confirmed)
     });         
-
+    casesAndColor[0] = "#bababa"
     // Create map UI
-    var datamap = new Datamap({
+    datamap = new Datamap({
         scope: "usa",
         element: document.getElementById("map"),
         height: 700,
-        width: 1200,
+        width: 1400,
         responsive: true,
         data: map_data,
         fills: casesAndColor,

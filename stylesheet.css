@@ -38,7 +38,41 @@ body {
 	text-align: center;
 	margin-left: 0%;
 	margin-right: 0%;
-
 	background-color: darkred;
 	color: whitesmoke;
 }
+
+.axis {
+	fill: black;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	user-select: none;
+  }
+  
+  .axis .halo {
+	stroke: black;
+	stroke-width: 1px;
+	stroke-linecap: round;
+  }
+  
+.slider .handle path {
+	stroke: darkred;
+	stroke-width: 4px;
+	stroke-linecap: round;
+	pointer-events: none;
+  }
+  
+  .slider .handle text {
+	fill: black;
+	text-align: center;
+	font-size: 16px;
+  }
+
+  #date-slider {
+	  padding-left: 15%;
+	  padding-right: 10%;
+  }
+
+  #date {
+	  display: none;
+  }
