@@ -48,20 +48,20 @@ body {
 	-moz-user-select: none;
 	user-select: none;
   }
-  
+
   .axis .halo {
 	stroke: black;
 	stroke-width: 1px;
 	stroke-linecap: round;
   }
-  
+
 .slider .handle path {
 	stroke: darkred;
 	stroke-width: 4px;
 	stroke-linecap: round;
 	pointer-events: none;
   }
-  
+
   .slider .handle text {
 	fill: black;
 	text-align: center;
@@ -69,10 +69,22 @@ body {
   }
 
   #date-slider {
-	  padding-left: 15%;
-	  padding-right: 10%;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+
   }
 
   #date {
 	  display: none;
   }
+
+	#visual {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		padding: 15%;
+		position: relative;
+		width: auto;
+		height: auto;
+	}
