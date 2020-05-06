@@ -247,7 +247,6 @@ function createMap(data) {
     datamap = new Datamap({
         scope: "usa",
         element: document.getElementById("map"),
-
         responsive: true,
         data: map_data,
         fills: casesAndColor,
