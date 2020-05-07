@@ -188,7 +188,7 @@ function createMap(data) {
     }
 
     for (var state in state_abbrevs) {
-        map_data[state_abbrevs[state]] = {'confirmed': 0, 'deaths': 0};
+        map_data[state_abbrevs[state]] = {'confirmed': 0, 'deaths': 0, 'population': 0};
     };
 
     data.forEach(state => {
