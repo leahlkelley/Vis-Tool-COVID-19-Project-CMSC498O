@@ -1,6 +1,3 @@
-* {
-	box-sizing: border-box;
-  }
 
 #state-data {
 	width: 100%;
@@ -25,13 +22,13 @@ body {
 
 .totals {
 	text-align: start;
-	padding-left: 75%;
-	padding-right: 2%;
+	margin-left: 2%;
 }
 
 .map-legend {
 	position: absolute;
-	padding: 2%;
+	padding-left: 2%;
+	
 }
 
 .page-title {
@@ -49,12 +46,12 @@ body {
 	user-select: none;
   }
   
-  .axis .halo {
+.axis .halo {
 	stroke: black;
 	stroke-width: 1px;
 	stroke-linecap: round;
   }
-  
+
 .slider .handle path {
 	stroke: darkred;
 	stroke-width: 4px;
@@ -62,17 +59,27 @@ body {
 	pointer-events: none;
   }
   
-  .slider .handle text {
+.slider .handle text {
 	fill: black;
 	text-align: center;
 	font-size: 16px;
   }
 
-  #date-slider {
+#date-slider {
 	  padding-left: 15%;
 	  padding-right: 10%;
   }
 
-  #date {
+#date {
 	  display: none;
   }
+
+	#visual {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		padding: 15%;
+		position: relative;
+		width: auto;
+		height: auto;
+	}
