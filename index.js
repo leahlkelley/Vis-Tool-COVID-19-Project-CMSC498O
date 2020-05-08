@@ -5,10 +5,12 @@ const years = {"2010":1, "2011": 2, "2012": 3, "2013": 4, "2014": 5, "2015": 6, 
 
 var data = [];
 var state_data = {};
+var county_data = {};
 var pop = {};
 var year;
 var datamap;
 
+// loading COVID data from github
 Papa.parsePromise = function(date) {
 
     var file = `https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/` +
@@ -18,6 +20,22 @@ Papa.parsePromise = function(date) {
     })
 }
 
+// Load/parse county data
+function loadCountyData() {
+  Papa.parse('https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv', {download: true, complete: function(results) {
+    results.data.forEach(record => {
+      if (!county_data[record[0]])
+        county_data[record[0]] = {};
+
+      if (!county_data[record[0]][record[2]])
+        county_data[record[0]][record[2]] = [];
+      
+      county_data[record[0]][record[2]].push({county: record[1], cases: record[4]});  
+    });
+  }});
+}
+
+
 $( function() {
      $("#visual").dialog( {
         autoOpen: false,
@@ -25,9 +43,12 @@ $( function() {
         modal: true,
         draggable: false,
         resizable: false,
-        minWidth: 1000,
-        minHeight: 550
+        minWidth: 900,
+        minHeight: 600
     });
+
+    // Load county data
+    loadCountyData();
 
     // Init datepicker
     $("#date").datepicker({
@@ -68,14 +89,13 @@ function loadData() {
 }
 
 //date slider d3v3 based on: http://bl.ocks.org/zanarmstrong/ddff7cd0b1220bc68a58
-
-
 var sliderMargin = {top:25, right:50, bottom:25, left:50},
     width = 950 - sliderMargin.left - sliderMargin.right,
     height = 75 - sliderMargin.top - sliderMargin.bottom;
 
 var formatDate = d3.time.format("%b %d");
 var formatDateForJQuery = d3.time.format("%m-%d-%Y")
+var formatDateForCounty = d3.time.format("%Y-%m-%d")
 var startDate = new Date("2020-01-23");
 var endDate = new Date();
 endDate.setDate(endDate.getDate()-1);
@@ -273,7 +293,7 @@ function createMap(data) {
         done: function(datamap) {
             datamap.svg.selectAll('.datamaps-subunit').on('click', function(state) {
               // Set modal title
-                $( "#visual" ).dialog( "option", "title", "Deaths/Confirmed/Recovered in " + state.properties.name);
+                $( "#visual" ).dialog( "option", "title", "Cases vs Counties in " + state.properties.name);
 
                 // Show modal!
                 $("#visual").dialog("open");
@@ -304,7 +324,8 @@ function createMap(data) {
                 }
 
                 Promise.all(promises).then(values => {
-                    createLineChart(weeklyData, state.properties.name);
+                    //createLineChart(weeklyData, state.properties.name);
+                    createBarChart(formatDateForCounty(new Date($('#date').val())), state.properties.name);
                 });
             });
         }
@@ -319,88 +340,145 @@ function createMap(data) {
 
 }
 
-// Line chart for selected state
-function createLineChart(map_data, state) {
+//Bar graph displaying each county's death rate in selected state on selected day 
+function createBarChart(date, state){
+
+   // Get x-y data 
+   var graph_data = county_data[date][state];
+    
     // set the dimensions
-    var width = document.getElementById("vis").getAttribute("width");
+    var width = Object.keys(graph_data).length * 25;
+    width = width > 900 ? width : 900;
     var height = document.getElementById("vis").getAttribute("height");
 
-    var vis = d3.select("#vis").attr("width", width).attr("height", height);
-    var margins = { top: 20, bottom: 50, left: 50, right: 10 };
+    var vis = d3v5.select("#vis").attr("width", width).attr("height", height);
+    var margins = { top: 20, bottom: 65, left: 50, right: 10 };
 
-    /* x -> date/time
-     * y -> population
+    /**
+     * Scales: xScale --> county name 
+     *         yScale --> # of deaths
      */
-    var xScale = d3.time.scale()
-                .domain(d3.extent(map_data.map(d => new Date(d.date))))
-                .range([margins.left, width - margins.right]);
-    var yScale = d3.scale.linear()
-                .domain([0, d3.max(map_data.map(d => d.confirmed))])
+
+    var xScale = d3v5.scaleBand()
+                .domain(graph_data.map(d => d.county))
+                .range([margins.left, width - margins.right])
+                .padding(0.5);
+    
+   var yScale = d3v5.scaleLinear()
+                .domain([d3v5.min(graph_data.map(d => d.cases)), d3v5.max(graph_data.map(d => d.cases))])
                 .range([height - margins.top - margins.bottom, 0]);
 
-    // Create line for the following: deaths, confirmed, recovered
-    var death_line = d3.svg.line()
-        .x(function(d) { return xScale(new Date(d.date));})
-        .y(function(d) { return yScale(d.deaths); });
-
-    var confirmed_line = d3.svg.line()
-        .x(function(d) { return xScale(new Date(d.date));})
-        .y(function(d) { return yScale(d.confirmed); });
-
-    var recovered_line = d3.svg.line()
-        .x(function(d) { return xScale(new Date(d.date));})
-        .y(function(d) { return yScale(d.recovered); });
-    map_data = map_data.sort(function(a, b) { return moment(a.date) - moment(b.date) })
-        console.log(map_data)
-
-    // Add path for the following: deaths, confirmed, recovered
-    vis.append("path")
-      .datum(map_data)
-      .attr("class", "line")
-      .style("stroke", "red")
-      .attr("d", death_line);
-
-    vis.append("path")
-      .datum(map_data)
-      .attr("class", "line")
-      .style("stroke", "blue")
-      .attr("d", confirmed_line);
-
-
-    // Add appropriate labels for x and y axis
-    vis.append("path")
-      .data(map_data[state])
-      .attr("class", "line")
-      .style("stroke", "green")
-      .attr("d", recovered_line);
-
-    // Add the x-axis
+  // create the bars 
+    vis.selectAll("rect")
+        .data(graph_data)
+        .enter()
+        .append("rect")
+        .attr("width", xScale.bandwidth())
+        .attr("height", d => height - margins.top - margins.bottom - yScale(d.cases))
+        .attr("x", d => xScale(d.county) + "px")
+        .attr("y", d => margins.top + yScale(d.cases) + "px")
+        .attr("fill", "red");
+    
+    // add x-axis as a "g" element 
     vis.append("g")
       .attr("transform", `translate(0,${height - margins.bottom})`)
-      .call(d3.svg.axisBottom(xScale))
+      .call(d3v5.axisBottom(xScale))
       .selectAll("text")
       .attr("x", -8)
       .attr("y", 11)
       .style("text-anchor", "end")
       .attr("dx", "-.08em")
-      .attr("dy", ".15em");
+      .attr("dy", ".15em")
+      .attr("transform", "rotate(-45)");
 
-     // Adds y-axis as a "g" element
+    // Adds y-axis as a "g" element
     vis.append("g")
       .attr("transform", `translate(${margins.left},${margins.top})`)
       .call(d3v5.axisLeft(yScale));
 
-    // add appropriate labels
+    // add appropriate labels    
     vis.append('text')
       .attr('text-anchor', 'middle')
       .attr("transform", "translate(" + (width / 2) + "," + (height) + ")")
-      .text("Date");
+      .text("Counties");
 
     vis.append('text')
       .attr('text-anchor', 'middle')
-      .attr("transform", "translate(" + 25 + "," + 10 + ")")
-      .text("Population");
+      // .attr("transform", "translate(" + 25 + "," + 10 + ")")
+      .attr("transform", "translate(" + 10 + "," + (height / 2) + ")rotate(-90)")
+      .text("Cases");
+    
 }
+
+// Line chart for selected state
+// function createLineChart(map_data, state) {
+//     // set the dimensions
+//     var width = document.getElementById("vis").getAttribute("width");
+//     var height = document.getElementById("vis").getAttribute("height");
+
+//     var vis = d3.select("#vis").attr("width", width).attr("height", height);
+//     var margins = { top: 20, bottom: 50, left: 50, right: 10 };
+
+//     /* x -> date/time
+//      * y -> population
+//      */
+//     var xScale = d3.time.scale()
+//                 .domain(d3.extent(map_data.map(d => new Date(d.date))))
+//                 .range([margins.left, width - margins.right]);
+//     var yScale = d3.scale.linear()
+//                 .domain([d3.min(map_data.map(d => d.population)), d3.max(map_data.map(d => d.population))])
+//                 .range([height - margins.top - margins.bottom, 0]);
+
+//     // Create line for the following: deaths, confirmed
+//     var death_line = d3.svg.line()
+//         .x(function(d) { return xScale(new Date(d.date));})
+//         .y(function(d) { return yScale(d.deaths); });
+
+//     var confirmed_line = d3.svg.line()
+//         .x(function(d) { return xScale(new Date(d.date));})
+//         .y(function(d) { return yScale(d.confirmed); });
+    
+//     map_data = map_data.sort(function(a, b) { return moment(a.date) - moment(b.date) })
+//         console.log(map_data)
+
+//     // Add path for the following: deaths, confirmed
+//     vis.append("path")
+//       .attr("class", "line")
+//       .style("stroke", "red")
+//       .attr("d", death_line(map_data.map(d => d.deaths)));
+
+//     vis.append("path")
+//       .attr("class", "line")
+//       .style("stroke", "blue")
+//       .attr("d", confirmed_line(map_data.map(d => d.confirmed)));
+
+
+//     // defines the axes
+//     vis.append("g")
+//       .attr("transform", `translate(0,${height - margins.bottom})`)
+//       .call(d3.svg.axis()
+//       .scale(timeScale)
+//       .orient("bottom")
+//       .ticks(5));
+
+//     vis.append("g")
+//       .attr("transform", `translate(${margins.left},${margins.top})`)
+//       .call(d3.svg.axis()
+//       .scale(yScale)
+//       .orient("left")
+//       .ticks(5));
+
+//     // add appropriate labels
+//     vis.append('text')
+//       .attr('text-anchor', 'middle')
+//       .attr("transform", "translate(" + (width / 2) + "," + (height) + ")")
+//       .text("Date");
+
+//     vis.append('text')
+//       .attr('text-anchor', 'middle')
+//       .attr("transform", "translate(" + 25 + "," + 10 + ")")
+//       .text("Population");
+// }
 
 /** Legend for the DataMap */
 function legend({

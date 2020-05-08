@@ -74,12 +74,15 @@ body {
 	  display: none;
   }
 
-	#visual {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		padding: 15%;
-		position: relative;
-		width: auto;
-		height: auto;
-	}
+#visual {
+	padding-left: 0px;
+}
+
+#barGraph {
+	overflow: auto;
+	align-items: center;
+	padding: 4%;
+	/*position: relative; */
+	width: auto;
+	height: auto;
+}
