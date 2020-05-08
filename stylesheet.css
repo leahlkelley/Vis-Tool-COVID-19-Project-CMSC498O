@@ -22,8 +22,7 @@ body {
 
 .totals {
 	text-align: start;
-	padding-left: 75%;
-	padding-right: 2%;
+	margin-left: 2%;
 }
 
 .map-legend {
@@ -52,7 +51,7 @@ body {
 	stroke-width: 1px;
 	stroke-linecap: round;
   }
-  
+
 .slider .handle path {
 	stroke: darkred;
 	stroke-width: 4px;
@@ -74,3 +73,13 @@ body {
 #date {
 	  display: none;
   }
+
+	#visual {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		padding: 15%;
+		position: relative;
+		width: auto;
+		height: auto;
+	}

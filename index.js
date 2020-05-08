@@ -39,7 +39,7 @@ $( function() {
 
     // Set date to yesterday's date
     $("#date").datepicker("setDate", "-1");
-    
+
     // Load population data and create map
     loadData();
 });
@@ -118,37 +118,37 @@ svgSlider.append("g")
 var slider = svgSlider.append("g")
     .attr("class", "slider")
     .call(brush);
-  
+
   slider.selectAll(".extent,.resize")
     .remove();
-  
+
   slider.select(".background")
     .attr("height", height);
-  
+
   var handle = slider.append("g")
     .attr("class", "handle")
-  
+
   handle.append("path")
     .attr("transform", "translate(0," + height / 2 + ")")
     .attr("d", "M 0 -18 V 18")
-  
+
   handle.append('text')
     .text(startingValue)
     .attr("class", "date-slider-text")
     .attr("transform", "translate(" + (-18) + " ," + (height / 2 - 25) + ")");
-  
+
   slider
     .call(brush.event)
 
 
 function brushed() {
     var value = brush.extent()[0];
-      
+
     if (d3.event.sourceEvent) { // not a programmatic event
         value = timeScale.invert(d3.mouse(this)[0]);
         brush.extent([value, value]);
     }
-      
+
     handle.attr("transform", "translate(" + timeScale(value) + ",0)");
     handle.select('text').text(formatDate(value));
     // console.log("brushed(): " + formatDateForJQuery(value));
@@ -157,7 +157,7 @@ function brushed() {
 
 }
 
-//end date slider 
+//end date slider
 
 
 
@@ -199,7 +199,7 @@ function createMap(data) {
             stateAbbrev = cityStateData[cityStateData.length - 1].trim();
         }
         else {
-            stateAbbrev = state_abbrevs[state[STATE_INDEX]]; 
+            stateAbbrev = state_abbrevs[state[STATE_INDEX]];
         }
 
         if (Object.values(state_abbrevs).indexOf(stateAbbrev) !== -1) {
@@ -232,12 +232,12 @@ function createMap(data) {
     //find the maximum and minimum number of cases
     var confirmedCasesNumbers = [];
     Object.keys(map_data).forEach(state => {
-        map_data[state].confirmed 
+        map_data[state].confirmed
         confirmedCasesNumbers.push(map_data[state].confirmed);
     });
     confirmedCasesNumbers.sort(function(a, b) {
         return a - b})
- 
+
     //create color scale for legend and map
     const colors = d3.scaleThreshold()
                         .domain([0, 500, 1000, 5000, 10000, 50000, 100000, 200000, 400000])
@@ -257,8 +257,6 @@ function createMap(data) {
     datamap = new Datamap({
         scope: "usa",
         element: document.getElementById("map"),
-        height: 700,
-        width: 1400,
         responsive: true,
         data: map_data,
         fills: casesAndColor,
@@ -276,7 +274,7 @@ function createMap(data) {
             datamap.svg.selectAll('.datamaps-subunit').on('click', function(state) {
               // Set modal title
                 $( "#visual" ).dialog( "option", "title", "Deaths/Confirmed/Recovered in " + state.properties.name);
-                
+
                 // Show modal!
                 $("#visual").dialog("open");
 
@@ -295,7 +293,7 @@ function createMap(data) {
                                 if (!dailyData.confirmed) {
                                     dailyData = {"confirmed": 0, "deaths": 0};
                                 }
-                                
+
                                 dailyData.confirmed += Number(curState[7]);
                                 dailyData.deaths += Number(curState[8]);
                             }
@@ -323,7 +321,7 @@ function createMap(data) {
 
 // Line chart for selected state
 function createLineChart(map_data, state) {
-    // set the dimensions 
+    // set the dimensions
     var width = document.getElementById("vis").getAttribute("width");
     var height = document.getElementById("vis").getAttribute("height");
 
@@ -339,8 +337,8 @@ function createLineChart(map_data, state) {
     var yScale = d3.scale.linear()
                 .domain([0, d3.max(map_data.map(d => d.confirmed))])
                 .range([height - margins.top - margins.bottom, 0]);
-                
-    // Create line for the following: deaths, confirmed, recovered    
+
+    // Create line for the following: deaths, confirmed, recovered
     var death_line = d3.svg.line()
         .x(function(d) { return xScale(new Date(d.date));})
         .y(function(d) { return yScale(d.deaths); });
@@ -354,8 +352,8 @@ function createLineChart(map_data, state) {
         .y(function(d) { return yScale(d.recovered); });
     map_data = map_data.sort(function(a, b) { return moment(a.date) - moment(b.date) })
         console.log(map_data)
-        
-    // Add path for the following: deaths, confirmed, recovered 
+
+    // Add path for the following: deaths, confirmed, recovered
     vis.append("path")
       .datum(map_data)
       .attr("class", "line")
@@ -376,7 +374,7 @@ function createLineChart(map_data, state) {
       .style("stroke", "green")
       .attr("d", recovered_line);
 
-    // Add the x-axis 
+    // Add the x-axis
     vis.append("g")
       .attr("transform", `translate(0,${height - margins.bottom})`)
       .call(d3.svg.axisBottom(xScale))
@@ -392,7 +390,7 @@ function createLineChart(map_data, state) {
       .attr("transform", `translate(${margins.left},${margins.top})`)
       .call(d3v5.axisLeft(yScale));
 
-    // add appropriate labels    
+    // add appropriate labels
     vis.append('text')
       .attr('text-anchor', 'middle')
       .attr("transform", "translate(" + (width / 2) + "," + (height) + ")")
@@ -409,7 +407,7 @@ function legend({
     color,
     title,
     tickSize = 6,
-    width = 400, 
+    width = 400,
     height = 30 + tickSize,
     marginTop = 5,
     marginRight = 0,
@@ -419,23 +417,23 @@ function legend({
     tickFormat,
     tickValues
   } = {}) {
-  
+
     const svg = d3v5.select(".map-legend").append("svg")
         .attr("width", width)
         .attr("height", height)
         .attr("viewBox", [0, 0, width, height])
         .style("overflow", "visible")
         .style("display", "block");
-  
+
     let tickAdjust = g => g.selectAll(".tick line").attr("y1", marginTop + marginBottom - height);
     let x;
-  
+
     // Continuous
     if (color.interpolate) {
       const n = Math.min(color.domain().length, color.range().length);
-  
+
       x = color.copy().rangeRound(d3v5.quantize(d3v5.interpolate(marginLeft, width - marginRight), n));
-  
+
       svg.append("image")
           .attr("x", marginLeft)
           .attr("y", marginTop)
@@ -444,13 +442,13 @@ function legend({
           .attr("preserveAspectRatio", "none")
           .attr("xlink:href", ramp(color.copy().domain(d3v5.quantize(d3v5.interpolate(0, 1), n))).toDataURL());
     }
-  
+
     // Sequential
     else if (color.interpolator) {
       x = Object.assign(color.copy()
           .interpolator(d3v5.interpolateRound(marginLeft, width - marginRight)),
           {range() { return [marginLeft, width - marginRight]; }});
-  
+
       svg.append("image")
           .attr("x", marginLeft)
           .attr("y", marginTop)
@@ -458,7 +456,7 @@ function legend({
           .attr("height", height - marginTop - marginBottom)
           .attr("preserveAspectRatio", "none")
           .attr("xlink:href", ramp(color.interpolator()).toDataURL());
-  
+
       // scaleSequentialQuantile doesn’t implement ticks or tickFormat.
       if (!x.ticks) {
         if (tickValues === undefined) {
@@ -470,23 +468,23 @@ function legend({
         }
       }
     }
-  
+
     // Threshold
     else if (color.invertExtent) {
       const thresholds
           = color.thresholds ? color.thresholds() // scaleQuantize
           : color.quantiles ? color.quantiles() // scaleQuantile
           : color.domain(); // scaleThreshold
-  
+
       const thresholdFormat
           = tickFormat === undefined ? d => d
           : typeof tickFormat === "string" ? d3.format(tickFormat)
           : tickFormat;
-  
+
       x = d3v5.scaleLinear()
           .domain([-1, color.range().length - 1])
           .rangeRound([marginLeft, width - marginRight]);
-  
+
       svg.append("g")
         .selectAll("rect")
         .data(color.range())
@@ -498,17 +496,17 @@ function legend({
           .attr("fill", d => d)
           .attr("stroke-width", "1px")
           .attr("stroke", "black");
-  
+
       tickValues = d3v5.range(thresholds.length);
       tickFormat = i => thresholdFormat(thresholds[i], i);
     }
-  
+
     // Ordinal
     else {
       x = d3v5.scaleBand()
           .domain(color.domain())
           .rangeRound([marginLeft, width - marginRight]);
-  
+
       svg.append("g")
         .selectAll("rect")
         .data(color.domain())
@@ -518,10 +516,10 @@ function legend({
           .attr("width", Math.max(0, x.bandwidth() - 1))
           .attr("height", height - marginTop - marginBottom)
           .attr("fill", color);
-  
+
       tickAdjust = () => {};
     }
-  
+
     svg.append("g")
         .attr("transform", `translate(0,${height - marginBottom})`)
         .call(d3v5.axisBottom(x)
