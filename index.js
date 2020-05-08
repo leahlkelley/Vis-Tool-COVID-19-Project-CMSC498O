@@ -217,7 +217,12 @@ function createMap(data) {
     });
 
     Object.keys(map_data).forEach(state => {
+      if ( map_data[state].confirmed == 0) { 
+        map_data[state].fillKey = 'ZERO'
+      } else {
         map_data[state].fillKey = map_data[state].confirmed;
+      }
+        
     });
 
     $('#total-confirmed').html(totalConfirmed.toLocaleString());
@@ -240,9 +245,14 @@ function createMap(data) {
 
     var casesAndColor = {};
      Object.keys(map_data).forEach(state => {
-        casesAndColor[map_data[state].confirmed] = colors(map_data[state].confirmed)
+       if (map_data[state].fillKey == 'ZERO') {
+         casesAndColor['ZERO'] = "#fff5f0"
+       } else {
+        casesAndColor[map_data[state].confirmed] = colors(map_data[state].confirmed);
+       }
+        
     });         
-    casesAndColor[0] = "#bababa"
+    //casesAndColor[0] = "#bababa"
     // Create map UI
     datamap = new Datamap({
         scope: "usa",
@@ -253,7 +263,7 @@ function createMap(data) {
         data: map_data,
         fills: casesAndColor,
         geographyConfig: {
-            borderColor: '#FFFFFF',
+            borderColor: '#a3a3a3',
             popupTemplate: function(geo, data) {
                 //console.log(data);
                 var popup = [`<div class="hoverinfo"><strong>${geo.properties.name}</strong><br>Confirmed cases: ${data.confirmed.toLocaleString()}` +
