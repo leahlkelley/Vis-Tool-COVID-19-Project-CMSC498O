@@ -30,7 +30,7 @@ function loadCountyData() {
       if (!county_data[record[0]][record[2]])
         county_data[record[0]][record[2]] = [];
       
-      county_data[record[0]][record[2]].push({county: record[1], cases: record[4]});  
+      county_data[record[0]][record[2]].push({county: record[1], cases: Number(record[4])});  
     });
   }});
 }
@@ -342,7 +342,6 @@ function createMap(data) {
 
 //Bar graph displaying each county's death rate in selected state on selected day 
 function createBarChart(date, state){
-
    // Get x-y data 
    var graph_data = county_data[date][state];
     
