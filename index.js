@@ -292,10 +292,10 @@ function createMap(data) {
         },
         done: function(datamap) {
             datamap.svg.selectAll('.datamaps-subunit').on('click', function(state) {
-              // Set modal title
-                $( "#visual" ).dialog( "option", "title", "Cases vs Counties in " + state.properties.name);
+              // Set model title
+                $( "#visual" ).dialog( "option", "title", "Cases per County in " + state.properties.name);
 
-                // Show modal!
+                // Show model
                 $("#visual").dialog("open");
 
                 // Clear old chart
@@ -344,18 +344,20 @@ function createMap(data) {
 function createBarChart(date, state){
    // Get x-y data 
    var graph_data = county_data[date][state];
-    
+   graph_data.sort((a, b) => (a.cases > b.cases) ? -1 : 1);
     // set the dimensions
     var width = Object.keys(graph_data).length * 25;
     width = width > 900 ? width : 900;
     var height = document.getElementById("vis").getAttribute("height");
 
     var vis = d3v5.select("#vis").attr("width", width).attr("height", height);
-    var margins = { top: 20, bottom: 65, left: 50, right: 10 };
+
+
+    var margins = { top: 50, bottom: 70, left: 55, right: 10 };
 
     /**
      * Scales: xScale --> county name 
-     *         yScale --> # of deaths
+     *         yScale --> # of cases
      */
 
     var xScale = d3v5.scaleBand()
@@ -376,7 +378,22 @@ function createBarChart(date, state){
         .attr("height", d => height - margins.top - margins.bottom - yScale(d.cases))
         .attr("x", d => xScale(d.county) + "px")
         .attr("y", d => margins.top + yScale(d.cases) + "px")
-        .attr("fill", "red");
+        .attr("fill", "darkred");
+        
+        
+      vis.append("g")
+        .attr("class", "bar-labels")
+        .attr("fill", "black")
+        .attr('text-anchor', 'start')
+        .attr("font-family", "sans-serif")
+        .attr("font-size", 10)
+        .selectAll("text")
+        .data(graph_data)
+        .join("text")
+          // .attr("x", (d) => xScale(d.county) + xScale.bandwidth() / 2)
+          // .attr("y",d => (margins.top + yScale(d.cases) - 6))
+          .attr("transform", d => "translate(" +  (xScale(d.county) + xScale.bandwidth() / 2) + "," + (margins.top + yScale(d.cases) - 2) + ")rotate(-45)")
+          .text(d => d.cases.toLocaleString());
     
     // add x-axis as a "g" element 
     vis.append("g")
@@ -398,14 +415,21 @@ function createBarChart(date, state){
     // add appropriate labels    
     vis.append('text')
       .attr('text-anchor', 'middle')
+      .attr("font-family", "sans-serif")
+      .attr("font-size", 14)
       .attr("transform", "translate(" + (width / 2) + "," + (height) + ")")
-      .text("Counties");
+      .text("Counties")
+      .attr("fill", "darkred");
 
     vis.append('text')
       .attr('text-anchor', 'middle')
+      .attr("font-family", "sans-serif")
+      .attr("font-size", 14)
       // .attr("transform", "translate(" + 25 + "," + 10 + ")")
-      .attr("transform", "translate(" + 10 + "," + (height / 2) + ")rotate(-90)")
-      .text("Cases");
+      .attr("transform", "translate(" + 10.3 + "," + (height / 2) + ")rotate(-90)")
+      .text("Number of Cases")
+      .attr("fill", "darkred");
+
     
 }
 
