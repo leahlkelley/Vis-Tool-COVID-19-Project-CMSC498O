@@ -364,7 +364,7 @@ function createBarChart(date, state){
                 .padding(0.5);
     
    var yScale = d3v5.scaleLinear()
-                .domain([d3v5.min(graph_data.map(d => d.cases)), d3v5.max(graph_data.map(d => d.cases))])
+                .domain([0, d3v5.max(graph_data.map(d => d.cases))])
                 .range([height - margins.top - margins.bottom, 0]);
 
   // create the bars 
