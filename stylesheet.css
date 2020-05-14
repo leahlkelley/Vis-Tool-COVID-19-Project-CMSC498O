@@ -22,7 +22,8 @@ body {
 
 .totals {
 	text-align: start;
-	margin-left: 38%;
+	margin-left: 74%;
+	font-size: 16px;
 }
 
 .map-legend {
@@ -76,6 +77,10 @@ body {
 
 #visual {
 	padding-left: 0px;
+}
+#map-type-picker {
+	margin-left: 1%;
+	font-size: 14px;
 }
 
 #barGraph {
