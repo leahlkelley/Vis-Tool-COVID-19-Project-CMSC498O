@@ -22,7 +22,7 @@ body {
 
 .totals {
 	text-align: start;
-	margin-left: 2%;
+	margin-left: 38%;
 }
 
 .map-legend {
@@ -82,7 +82,25 @@ body {
 	overflow: auto;
 	align-items: center;
 	padding: 4%;
-	/*position: relative; */
 	width: auto;
 	height: auto;
 }
+
+::-webkit-scrollbar {
+	-webkit-appearance: none;
+	width: 7px;
+  }
+
+::-webkit-scrollbar-thumb {
+	border-radius: 4px;
+	background-color: rgba(0, 0, 0, .5);
+	-webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+	box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+  }
+
+#pocText {
+	text-align: center;
+	padding-top: 10%;
+	margin-left: 5%;
+}
+
