@@ -705,7 +705,7 @@ function createDeathMap(data) {
         done: function(datamap) {
             datamap.svg.selectAll('.datamaps-subunit').on('click', function(state) {
               // Set model title
-                $( "#visual" ).dialog( "option", "title", "Cases per County in " + state.properties.name);
+                $( "#visual" ).dialog( "option", "title", "Deaths per County in " + state.properties.name);
 
                 // Show model
                 $("#visual").dialog("open");
@@ -847,7 +847,7 @@ function createDeathsBarChart(date, state){
      .attr("font-size", 14)
      // .attr("transform", "translate(" + 25 + "," + 10 + ")")
      .attr("transform", "translate(" + 10.3 + "," + (height / 2) + ")rotate(-90)")
-     .text("Number of Cases")
+     .text("Number of Deaths")
      .attr("fill", "#54278f");
 
    
